@@ -1,0 +1,204 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Purpose of a channel
+model ChannelPurpose {
+  id          Int                @id @default(autoincrement())
+  // discord ID linked to channel
+  discordId   String             @map("discord_id") @db.VarChar(255)
+  // foreign key to type of channel purpose
+  channelType Int                @map("channel_type")
+  type        ChannelPurposeType @relation(fields: [channelType], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "channel_purpose_type_fk")
+  // foreign key to server channel belongs to
+  serverId    Int                @map("server_id")
+  server      Server             @relation(fields: [serverId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "channel_purpose_server_fk")
+  // foreign key to guild channel belongs to
+  guildId     Int?               @map("guild_id")
+  guild       Guild?             @relation(fields: [guildId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "channel_purpose_guild_fk")
+
+  @@unique([channelType, serverId, guildId], map: "uc_channel_purpose")
+  @@map("Channel_Purpose")
+}
+
+// Purposes for a channel to have
+model ChannelPurposeType {
+  id    Int    @id @default(autoincrement())
+  // name of channel purpose type
+  name  String @db.VarChar(255)
+  // all channels that map to the type
+  roles ChannelPurpose[]
+
+  @@map("Channel_Purpose_Type")
+}
+
+// Information about the game the guild is for
+model Game {
+  id     Int    @id @default(autoincrement())
+  // name of game
+  name   String @db.VarChar(255) @unique(map: "uc_game")
+  // all guilds related to game
+  guilds Guild[]
+  // all applicants to this game
+  applicants GuildApplicant[]
+  // application content
+  applications GuildApplication[]
+}
+
+// Information about the guild/team.
+model Guild {
+  id         Int     @id @default(autoincrement())
+  // foreign key to game guild is for
+  gameId     Int     @map("game_id")
+  game       Game    @relation(fields: [gameId], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "guild_game_fk")
+  // foreign key to server guild is being hosted in
+  serverId   Int     @map("server_id")
+  server     Server  @relation(fields: [serverId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "guild_server_fk")
+  // unique identifer for guild in game
+  guildId    String  @map("guild_id") @db.VarChar(32)
+  // name of guild
+  name       String  @db.VarChar(255)
+  // whether the guild is active
+  active     Boolean @default(true)
+  // all roles related to guild
+  roles      UserRole[]
+  // who applied to this guild
+  applicants GuildApplicant[]
+  // channels that belong to the guild
+  channels ChannelPurpose[]
+
+  @@unique([gameId, guildId, serverId], map: "uc_guild")
+}
+
+// Applicants to guilds
+model GuildApplicant {
+  id       Int     @id @default(autoincrement())
+  // foreign key to user
+  userId   Int     @map("user_id")
+  user     User    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "guild_applicant_user_fk")
+  // foreign key to guild user applied to
+  guildId  Int    @map("guild_id")
+  guild    Guild  @relation(fields: [guildId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "guild_applicant_guild_fk")
+  // foreign key to game user applied to
+  gameId   Int    @map("game_id")
+  game     Game   @relation(fields: [gameId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "guild_applicant_game_fk")
+  // foreign key to server user applied to
+  serverId Int    @map("server_id")
+  server   Server @relation(fields: [serverId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "guild_applicant_server_fk")
+
+  @@unique([userId, gameId, serverId], map: "uc_guild_applicant")
+  @@map("Guild_Applicant")
+}
+
+// Guild Application content
+model GuildApplication {
+  id       Int    @id @default(autoincrement())
+  // discord ID linked to channel
+  text     String @db.LongText
+  // foreign key to server application belongs to
+  serverId Int    @map("server_id")
+  server   Server @relation(fields: [serverId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "guild_application_server_fk")
+  // foreign key to game application belongs to
+  gameId   Int    @map("game_id")
+  game     Game   @relation(fields: [gameId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "guild_application_game_fk")
+
+  @@unique([serverId, gameId], map: "uc_guild_application")
+  @@map("Guild_Application")
+}
+
+// Information about the server/community
+model Server {
+  id         Int     @id @default(autoincrement())
+  // name of community
+  name       String  @db.VarChar(255)
+  // discord ID linked to server. Let it be null in case there is no discord set up
+  discordId String? @map("discord_id") @unique(map: "uc_server") @db.VarChar(255)
+  // whether the server is active
+  active     Boolean @default(true)
+  // all guilds in server
+  guilds     Guild[]
+  // all roles related to server
+  roles      UserRole[]
+  // who applied to this guild
+  applicants GuildApplicant[]
+  // application content
+  applications GuildApplication[]
+  // channels that belong to the server
+  channels ChannelPurpose[]
+}
+
+// Information about a user
+model User {
+  id           Int     @id @default(autoincrement())
+  // name of user
+  name         String  @db.VarChar(255)
+  // discord ID linked to user. Let it be null in case there is no discord set up
+  discordId    String? @map("discord_id") @unique(map: "uc_user") @db.VarChar(255)
+  // email of user
+  email        String? @unique(map: "uc_user_email") @db.VarChar(255)
+  // whether the user is active
+  active       Boolean @default(true)
+  // what roles a user has
+  roles        UserRelation[]
+  // what guilds has this user applied to
+  applications GuildApplicant[]
+}
+
+// What roles a user has
+model UserRelation {
+  id     Int      @id @default(autoincrement())
+  // foreign key to user
+  userId Int      @map("user_id")
+  user   User     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "user_relation_user_fk")
+  // foreign key to role
+  roleId Int      @map("role_id")
+  role   UserRole @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "user_relation_role_fk")
+  
+  @@unique([userId, roleId], map: "uc_user_relation")
+  @@map("User_Relation")
+}
+
+// Which roles correspond with which user_role_type
+model UserRole {
+  id        Int           @id @default(autoincrement())
+  // name of user role
+  name      String        @db.VarChar(255)
+  // foreign key to type of user role
+  roleType  Int?          @map("role_type")
+  type      UserRoleType? @relation(fields: [roleType], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "user_role_type_fk")
+  // foreign key to server user role belongs to
+  serverId  Int           @map("server_id")
+  server    Server        @relation(fields: [serverId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "user_role_server_fk")
+  // foreign key to guild user role belongs to
+  guildId   Int?          @map("guild_id")
+  guild     Guild?        @relation(fields: [guildId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "user_role_guild_fk")
+  // discord ID linked to role. Let it be null in case there is no discord set up
+  discordId String?       @map("discord_id") @unique(map: "uc_user_role") @db.VarChar(255)
+  // which users has this role
+  users     UserRelation[]
+
+  @@unique([roleType, serverId, guildId], map: "uc_user_role_2")
+  @@map("User_Role")
+}
+
+// Roles users can have in the server/guild.
+model UserRoleType {
+  id    Int    @id @default(autoincrement())
+  // name of user role type
+  name  String @db.VarChar(255)
+  // all roles that map to the type
+  roles UserRole[]
+
+  @@map("User_Role_Type")
+}

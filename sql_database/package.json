@@ -1,0 +1,31 @@
+{
+  "name": "sql_database",
+  "version": "1.0.0",
+  "main": "index.js",
+  "prisma": {
+    "seed": "tsx prisma/seed/seed.ts"
+  },
+  "@snaplet/seed": {
+    "config": "prisma/seed/seed.config.ts"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "migrate": "prisma migrate dev",
+    "postmigrate": "npx @snaplet/seed sync"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@snaplet/seed": "^0.98.0",
+    "@types/node": "^22.7.5",
+    "prisma": "^5.20.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.20.0"
+  }
+}
