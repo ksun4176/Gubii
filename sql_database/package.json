@@ -1,6 +1,7 @@
 {
   "name": "sql_database",
   "version": "1.0.0",
+  "description": "Commands to update database schema",
   "main": "index.js",
   "prisma": {
     "seed": "tsx prisma/seed/seed.ts"
@@ -16,7 +17,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "devDependencies": {
     "@snaplet/seed": "^0.98.0",
     "@types/node": "^22.7.5",

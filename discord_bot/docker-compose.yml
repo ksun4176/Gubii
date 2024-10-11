@@ -1,0 +1,9 @@
+services:
+  bot:
+    container_name: gubii_bot
+    build:
+      context: .
+      target: production
+    ports:
+    - "${BOT_PORT}:${BOT_PORT}"
+    env_file: .env

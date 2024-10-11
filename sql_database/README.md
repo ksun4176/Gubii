@@ -19,7 +19,7 @@ The database for Gubii. Here you can update the database schema or build out a t
 ### To update the AWS RDS:
 1. You will need the key in `../jumpbox-key` from ME
 2. Call `ssh -i ../jumpbox-key -f -N -L <local-port-you-connect-to>:<rds-endpoint>:<rds:listening-port> ec2-user@<bastion-endpoint> -v` to create an SSH tunnel
-3. Update `.env` to localhost:<local-port-you-connect-to>
+3. Update `.env` to <your-machine-ip-address>:<local-port-you-connect-to>
 4. Update the database schema using `npm run migrate`
 5. Close the ssh tunnel by killing the process listening to the port
 
