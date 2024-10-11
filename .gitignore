@@ -92,6 +92,7 @@ package-lock.json
 # misc
 .DS_Store
 */dist/
+jumpbox-key*
 
 # Local .terraform directories
 **/.terraform/*

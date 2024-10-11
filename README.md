@@ -10,7 +10,7 @@ For this project, we will be deploying:
 1. Make sure you have pre-requisites listed here completed
    https://developer.hashicorp.com/terraform/tutorials/aws-get-started/aws-build
 2. Call `terraform init` to install dependencies
-3. Duplicate `secret.tfvars.example` to `secret.tfvars` and fill in the variables
+3. Get `secret.tfvars` and `jumpbox-key` from ME. These contains credentials needed.
 4. Call `terraform apply -var-file="secret.tfvars"` to create your infrastructure
 
 ## Database Setup

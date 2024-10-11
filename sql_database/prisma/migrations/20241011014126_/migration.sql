@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE `Channel_Purpose` (
+CREATE TABLE `channel_purpose` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `discord_id` VARCHAR(255) NOT NULL,
     `channel_type` INTEGER NOT NULL,
@@ -11,7 +11,7 @@ CREATE TABLE `Channel_Purpose` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Channel_Purpose_Type` (
+CREATE TABLE `channel_purpose_type` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(255) NOT NULL,
 
@@ -19,7 +19,7 @@ CREATE TABLE `Channel_Purpose_Type` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Game` (
+CREATE TABLE `game` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(255) NOT NULL,
 
@@ -28,7 +28,7 @@ CREATE TABLE `Game` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Guild` (
+CREATE TABLE `guild` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `game_id` INTEGER NOT NULL,
     `server_id` INTEGER NOT NULL,
@@ -41,7 +41,7 @@ CREATE TABLE `Guild` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Guild_Applicant` (
+CREATE TABLE `guild_applicant` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `user_id` INTEGER NOT NULL,
     `guild_id` INTEGER NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE `Guild_Applicant` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Guild_Application` (
+CREATE TABLE `guild_application` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `text` LONGTEXT NOT NULL,
     `server_id` INTEGER NOT NULL,
@@ -64,7 +64,7 @@ CREATE TABLE `Guild_Application` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Server` (
+CREATE TABLE `server` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(255) NOT NULL,
     `discord_id` VARCHAR(255) NULL,
@@ -75,7 +75,7 @@ CREATE TABLE `Server` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `User` (
+CREATE TABLE `user` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(255) NOT NULL,
     `discord_id` VARCHAR(255) NULL,
@@ -88,7 +88,7 @@ CREATE TABLE `User` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `User_Relation` (
+CREATE TABLE `user_relation` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `user_id` INTEGER NOT NULL,
     `role_id` INTEGER NOT NULL,
@@ -98,7 +98,7 @@ CREATE TABLE `User_Relation` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `User_Role` (
+CREATE TABLE `user_role` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(255) NOT NULL,
     `role_type` INTEGER NULL,
@@ -112,7 +112,7 @@ CREATE TABLE `User_Role` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `User_Role_Type` (
+CREATE TABLE `user_role_type` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(255) NOT NULL,
 
@@ -120,49 +120,49 @@ CREATE TABLE `User_Role_Type` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
-ALTER TABLE `Channel_Purpose` ADD CONSTRAINT `channel_purpose_type_fk` FOREIGN KEY (`channel_type`) REFERENCES `Channel_Purpose_Type`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `channel_purpose` ADD CONSTRAINT `channel_purpose_type_fk` FOREIGN KEY (`channel_type`) REFERENCES `channel_purpose_type`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Channel_Purpose` ADD CONSTRAINT `channel_purpose_server_fk` FOREIGN KEY (`server_id`) REFERENCES `Server`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
+ALTER TABLE `channel_purpose` ADD CONSTRAINT `channel_purpose_server_fk` FOREIGN KEY (`server_id`) REFERENCES `server`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Channel_Purpose` ADD CONSTRAINT `channel_purpose_guild_fk` FOREIGN KEY (`guild_id`) REFERENCES `Guild`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `channel_purpose` ADD CONSTRAINT `channel_purpose_guild_fk` FOREIGN KEY (`guild_id`) REFERENCES `guild`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Guild` ADD CONSTRAINT `guild_game_fk` FOREIGN KEY (`game_id`) REFERENCES `Game`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `guild` ADD CONSTRAINT `guild_game_fk` FOREIGN KEY (`game_id`) REFERENCES `game`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Guild` ADD CONSTRAINT `guild_server_fk` FOREIGN KEY (`server_id`) REFERENCES `Server`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
+ALTER TABLE `guild` ADD CONSTRAINT `guild_server_fk` FOREIGN KEY (`server_id`) REFERENCES `server`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Guild_Applicant` ADD CONSTRAINT `guild_applicant_user_fk` FOREIGN KEY (`user_id`) REFERENCES `User`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
+ALTER TABLE `guild_applicant` ADD CONSTRAINT `guild_applicant_user_fk` FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Guild_Applicant` ADD CONSTRAINT `guild_applicant_guild_fk` FOREIGN KEY (`guild_id`) REFERENCES `Guild`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
+ALTER TABLE `guild_applicant` ADD CONSTRAINT `guild_applicant_guild_fk` FOREIGN KEY (`guild_id`) REFERENCES `guild`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Guild_Applicant` ADD CONSTRAINT `guild_applicant_game_fk` FOREIGN KEY (`game_id`) REFERENCES `Game`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
+ALTER TABLE `guild_applicant` ADD CONSTRAINT `guild_applicant_game_fk` FOREIGN KEY (`game_id`) REFERENCES `game`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Guild_Applicant` ADD CONSTRAINT `guild_applicant_server_fk` FOREIGN KEY (`server_id`) REFERENCES `Server`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
+ALTER TABLE `guild_applicant` ADD CONSTRAINT `guild_applicant_server_fk` FOREIGN KEY (`server_id`) REFERENCES `server`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Guild_Application` ADD CONSTRAINT `guild_application_server_fk` FOREIGN KEY (`server_id`) REFERENCES `Server`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
+ALTER TABLE `guild_application` ADD CONSTRAINT `guild_application_server_fk` FOREIGN KEY (`server_id`) REFERENCES `server`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Guild_Application` ADD CONSTRAINT `guild_application_game_fk` FOREIGN KEY (`game_id`) REFERENCES `Game`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
+ALTER TABLE `guild_application` ADD CONSTRAINT `guild_application_game_fk` FOREIGN KEY (`game_id`) REFERENCES `game`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `User_Relation` ADD CONSTRAINT `user_relation_user_fk` FOREIGN KEY (`user_id`) REFERENCES `User`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
+ALTER TABLE `user_relation` ADD CONSTRAINT `user_relation_user_fk` FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `User_Relation` ADD CONSTRAINT `user_relation_role_fk` FOREIGN KEY (`role_id`) REFERENCES `User_Role`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
+ALTER TABLE `user_relation` ADD CONSTRAINT `user_relation_role_fk` FOREIGN KEY (`role_id`) REFERENCES `user_role`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `User_Role` ADD CONSTRAINT `user_role_type_fk` FOREIGN KEY (`role_type`) REFERENCES `User_Role_Type`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `user_role` ADD CONSTRAINT `user_role_type_fk` FOREIGN KEY (`role_type`) REFERENCES `user_role_type`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `User_Role` ADD CONSTRAINT `user_role_server_fk` FOREIGN KEY (`server_id`) REFERENCES `Server`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
+ALTER TABLE `user_role` ADD CONSTRAINT `user_role_server_fk` FOREIGN KEY (`server_id`) REFERENCES `server`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `User_Role` ADD CONSTRAINT `user_role_guild_fk` FOREIGN KEY (`guild_id`) REFERENCES `Guild`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `user_role` ADD CONSTRAINT `user_role_guild_fk` FOREIGN KEY (`guild_id`) REFERENCES `guild`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;

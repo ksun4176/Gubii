@@ -29,7 +29,7 @@ model ChannelPurpose {
   guild       Guild?             @relation(fields: [guildId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "channel_purpose_guild_fk")
 
   @@unique([channelType, serverId, guildId], map: "uc_channel_purpose")
-  @@map("Channel_Purpose")
+  @@map("channel_purpose")
 }
 
 // Purposes for a channel to have
@@ -40,7 +40,7 @@ model ChannelPurposeType {
   // all channels that map to the type
   roles ChannelPurpose[]
 
-  @@map("Channel_Purpose_Type")
+  @@map("channel_purpose_type")
 }
 
 // Information about the game the guild is for
@@ -54,6 +54,8 @@ model Game {
   applicants GuildApplicant[]
   // application content
   applications GuildApplication[]
+
+  @@map("game")
 }
 
 // Information about the guild/team.
@@ -79,6 +81,7 @@ model Guild {
   channels ChannelPurpose[]
 
   @@unique([gameId, guildId, serverId], map: "uc_guild")
+  @@map("guild")
 }
 
 // Applicants to guilds
@@ -98,7 +101,7 @@ model GuildApplicant {
   server   Server @relation(fields: [serverId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "guild_applicant_server_fk")
 
   @@unique([userId, gameId, serverId], map: "uc_guild_applicant")
-  @@map("Guild_Applicant")
+  @@map("guild_applicant")
 }
 
 // Guild Application content
@@ -114,7 +117,7 @@ model GuildApplication {
   game     Game   @relation(fields: [gameId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "guild_application_game_fk")
 
   @@unique([serverId, gameId], map: "uc_guild_application")
-  @@map("Guild_Application")
+  @@map("guild_application")
 }
 
 // Information about the server/community
@@ -136,6 +139,8 @@ model Server {
   applications GuildApplication[]
   // channels that belong to the server
   channels ChannelPurpose[]
+
+  @@map("server")
 }
 
 // Information about a user
@@ -153,6 +158,8 @@ model User {
   roles        UserRelation[]
   // what guilds has this user applied to
   applications GuildApplicant[]
+
+  @@map("user")
 }
 
 // What roles a user has
@@ -166,7 +173,7 @@ model UserRelation {
   role   UserRole @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "user_relation_role_fk")
   
   @@unique([userId, roleId], map: "uc_user_relation")
-  @@map("User_Relation")
+  @@map("user_relation")
 }
 
 // Which roles correspond with which user_role_type
@@ -189,7 +196,7 @@ model UserRole {
   users     UserRelation[]
 
   @@unique([roleType, serverId, guildId], map: "uc_user_role_2")
-  @@map("User_Role")
+  @@map("user_role")
 }
 
 // Roles users can have in the server/guild.
@@ -200,5 +207,5 @@ model UserRoleType {
   // all roles that map to the type
   roles UserRole[]
 
-  @@map("User_Role_Type")
+  @@map("user_role_type")
 }
