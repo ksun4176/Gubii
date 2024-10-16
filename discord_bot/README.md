@@ -51,6 +51,18 @@ If you change the command definition (description, options, etc.), you will need
 1. Deploy commands using `npm run register`
    - Node does not run on TypeScript so we need to create the corresponding JavaScript files before registering commands
 
-Once you are done with your changes, run these commands in terminal:
+To verify that the docker container runs as expected, run these commands in terminal:
 1. Rebuild container using `docker-compose -f docker-compose.yml up -d --build`
+   NOTE: Since Docker container is in separate network, DB_HOST needs to be set to your local machine's IP address to work properly. You would also need to make sure the login works from any connection.
 2. Access your server and verify changes
+
+### To update the AWS ECS container:
+1. Find the AWS Elastic Container Registry for the discord bot.
+2. Update `.env` with AWS RDS info.
+3. Run the push commands to upload new docker image
+   Example:
+   - `aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <repository-url>`
+   - `docker build -t bot-repo .`
+   - `docker tag bot-repo:latest <repository-url>/bot-repo:latest`
+   - `docker push <repository-url>/bot-repo:latest`
+4. Redeploy by calling `aws ecs update-service --cluster bot-cluster --service bot-service --force-new-deployment`

@@ -212,6 +212,7 @@ const acceptAction = async function(
     // check what guilds user is currently in so user can clean them up if need be
     const currentGuilds = currentRelations.filter(relation => {
         return relation.role.roleType === UserRoleType.GuildMember &&
+            relation.role.id !== guildRole?.id &&
             relation.role.id !== sharedGuildRole?.id &&
             relation.role.guild?.gameId === guild.gameId;
     });
@@ -226,25 +227,31 @@ const acceptAction = async function(
             }
             await interaction.editReply(message);
 
-            const confirmMessages = await interaction.channel.awaitMessages({
-                filter: message => message.author.id === caller.discordId,
-                max: 1,
-                time: 10000,
-            });
-            const removeOldRoles = confirmMessages.first()!.content.toLowerCase();
             let followUpMessage = '';
-            if (removeOldRoles === 'yes' || removeOldRoles === 'y') {
-                await prisma.userRelation.deleteMany({ 
-                    where: { OR: currentGuilds.map(relation => { return { id: relation.id } }) }
+            try {
+                const confirmMessages = await interaction.channel.awaitMessages({
+                    filter: message => message.author.id === caller.discordId,
+                    max: 1,
+                    time: 10000,
                 });
-                if (user.discordId) {
-                    const discordUser = await interaction.guild!.members.fetch(user.discordId);
-                    discordUser.roles.remove(currentGuilds.filter(relation => !!relation.role.discordId).map(relation => relation.role.discordId!));
+                const removeOldRoles = confirmMessages.first()!.content.toLowerCase();
+                if (removeOldRoles === 'yes' || removeOldRoles === 'y') {
+                    await prisma.userRelation.deleteMany({ 
+                        where: { OR: currentGuilds.map(relation => { return { id: relation.id } }) }
+                    });
+                    if (user.discordId) {
+                        const discordUser = await interaction.guild!.members.fetch(user.discordId);
+                        discordUser.roles.remove(currentGuilds.filter(relation => !!relation.role.discordId).map(relation => relation.role.discordId!));
+                    }
+                    followUpMessage = 'Old guild roles have been removed.';
                 }
-                followUpMessage = 'Old guild roles have been removed.';
+                else {
+                    followUpMessage = 'OK, user now belongs to multiple guilds.';
+                }
             }
-            else {
-                followUpMessage = 'OK, user now belongs to multiple guilds.';
+            catch (error) {
+                console.log('No response received');
+                followUpMessage = 'No response so old guild roles were kept';
             }
             await interaction.followUp(followUpMessage);
         }
