@@ -2,16 +2,9 @@
 A discord bot to handle building a guild structure for any game that you're playing
 
 ## DevOps
-We will be using Terraform to manage infrastructure and automate deployment.
-For this project, we will be deploying:
-- AWS RDS: Database with all information needed to run this project
-
-### How to use
-1. Make sure you have pre-requisites listed here completed
-   https://developer.hashicorp.com/terraform/tutorials/aws-get-started/aws-build
-2. Call `terraform init` to install dependencies
-3. Get `secret.tfvars`, `jumpbox-key`, `.env` from ME. These contains credentials needed.
-4. Call `terraform apply -var-file="secret.tfvars" -auto-approve` to create your infrastructure
+The architecture setup is built using Terraform. If you need to make changes to the architecture:
+1. Duplicate `.env.example` to `terraform/.env` and fill in the variables.
+2. Go to `terraform/` folder to finish this setup.
 
 ## Database Setup
 The initial state of the database is built using Prisma. If you need to create a test database:
