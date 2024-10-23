@@ -78,47 +78,55 @@ const kickGuildCommand: CommandInterface = {
 
             const server = await prisma.server.findUniqueOrThrow({ where: { discordId: serverInfo.id } });
             const user = await prisma.user.findUniqueOrThrow({ where: {discordId: userInfo.id } });
-            // get current roles
-            const userRelations = await prisma.userRelation.findMany({ 
-                where: { 
-                    user: user,
-                    role: { serverId: server.id }
-                },
-                include: { role: { include: { guild: true } } }
-            });
 
-            // find what guilds user is currently in so user can clean them all up if need be
-            const guildRelations = userRelations.filter(relation => {
-                return relation.role.roleType === UserRoleType.GuildMember &&
-                    relation.role.guild?.gameId === gameId &&
-                    (!guildId || relation.role.guildId === guildId);
+            const discordCaller = await submitted.guild!.members.fetch(caller.discordId!);
+            const discordUser = await submitted.guild!.members.fetch(user.discordId!);
+
+            let currentGuilds = await prisma.userRole.findMany({
+                where: {
+                    roleType: UserRoleType.GuildMember,
+                    serverId: server.id,
+                    guild: {
+                        guildId: { not: '' }, // not shared guild
+                        gameId: gameId
+                    }
+                },
+                include: { guild: true }
             });
-            if (guildRelations.length === 0) {
+            currentGuilds = currentGuilds.filter(role => 
+                discordUser.roles.cache.has(role.discordId!) && // check that the user is in these guilds
+                (!guildId || role.guildId === guildId)
+            );
+            
+            if (currentGuilds.length === 0) {
                 await submitted.editReply('This user is not in any guilds to be removed from.');
                 return;
             }
 
+            let guildsNotKicked: typeof currentGuilds = [];
+            let guildsToKick: typeof currentGuilds = [];
             // check if server owner OR admin
-            let guildsToKick: typeof guildRelations = [];
             let roles: Prisma.UserRoleWhereInput[] = [
                 { serverId: server.id, roleType: UserRoleType.ServerOwner },
                 { serverId: server.id, roleType: UserRoleType.Administrator }
             ];
-            let hasPermission = await databaseHelper.userHasPermission(caller.id, roles);
+            let hasPermission = await databaseHelper.userHasPermission(discordCaller, serverInfo, roles);
             if (hasPermission) {
-                guildsToKick = guildRelations;
+                guildsToKick = currentGuilds;
             }
             else {
                 // check if they have guild management
-                for (let index = guildRelations.length - 1; index >= 0; index--) {
-                    const relation = guildRelations[index];
+                for (let role of currentGuilds) {
                     roles = [
-                        { serverId: server.id, roleType: UserRoleType.GuildLead, guildId: relation.role.guildId },
-                        { serverId: server.id, roleType: UserRoleType.GuildManagement, guildId: relation.role.guildId },
+                        { serverId: server.id, roleType: UserRoleType.GuildLead, guildId: role.guildId },
+                        { serverId: server.id, roleType: UserRoleType.GuildManagement, guildId: role.guildId },
                     ];
-                    hasPermission = await databaseHelper.userHasPermission(caller.id, roles);
+                    hasPermission = await databaseHelper.userHasPermission(discordCaller, serverInfo, roles);
                     if (hasPermission) {
-                        guildsToKick.push(relation);
+                        guildsToKick.push(role);
+                    }
+                    else {
+                        guildsNotKicked.push(role);
                     }
                 }
             }
@@ -126,21 +134,17 @@ const kickGuildCommand: CommandInterface = {
                 await submitted.editReply('You do not have permission to run this command');
                 return;
             }
-
-            await prisma.userRelation.deleteMany({ 
-                where: { OR: guildsToKick.map(relation => { return { id: relation.id } }) }
-            });
-            if (user.discordId) {
-                const discordUser = await submitted.guild!.members.fetch(user.discordId);
-                discordUser.roles.remove(guildsToKick.filter(relation => !!relation.role.discordId).map(relation => relation.role.discordId!));
-            }
+            discordUser.roles.remove(guildsToKick.map(role => role.discordId!));
 
             let message = `'${user.name}' was removed from these guilds:\n`;
-            for (let relation of guildsToKick) {
-                if (relation.role.guild?.guildId === '') {
-                    continue;
+            for (let role of guildsToKick) {
+                message += `- '${role.guild!.name}'\n`;
+            }
+            if (guildsNotKicked.length > 0) {
+                message += `You did not have permission to kick from these guilds:\n`;
+                for (let role of guildsNotKicked) {
+                    message += `- '${role.guild!.name}'\n`;
                 }
-                message += `- '${relation.role.guild!.name}'\n`;
             }
             console.log(message);
             await submitted.editReply(message);

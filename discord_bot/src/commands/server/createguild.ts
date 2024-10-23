@@ -67,14 +67,15 @@ const createguildCommand: CommandInterface = {
             const { prisma, caller, databaseHelper } = await GetCommandInfo(interaction.user);
             
             const server = await prisma.server.findUniqueOrThrow({ where: {discordId: serverInfo.id } });
+            const discordCaller = await interaction.guild!.members.fetch(caller.discordId!);
             // check if server owner OR admin
             const roles: Prisma.UserRoleWhereInput[] = [
                 { serverId: server.id, roleType: UserRoleType.ServerOwner },
                 { serverId: server.id, roleType: UserRoleType.Administrator }
             ]
-            const hasPermission = await databaseHelper.userHasPermission(caller.id, roles);
+            const hasPermission = await databaseHelper.userHasPermission(discordCaller, serverInfo, roles);
             if (!hasPermission) {
-                interaction.editReply('Only the server owner and administrators have permission to run this command');
+                interaction.editReply('You do not have permission to run this command');
                 return;
             }
 

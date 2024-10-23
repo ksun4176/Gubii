@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import { Client, Collection, IntentsBitField } from "discord.js";
+import { Client, Collection, IntentsBitField, Partials } from "discord.js";
 import { CommandInterface } from "./CommandInterface";
 import { addEventListeners, executeOnAllCommands } from "./DiscordHelper";
 
@@ -12,15 +12,20 @@ declare module "discord.js" {
 dotenv.config();
 
 // create a Discord client with the right intents
-const client: Client = new Client({ intents: [
-    IntentsBitField.Flags.Guilds,
-    IntentsBitField.Flags.GuildMembers,
-    IntentsBitField.Flags.GuildMessages,
-    IntentsBitField.Flags.GuildMessageReactions,
-    IntentsBitField.Flags.DirectMessages,
-    IntentsBitField.Flags.DirectMessageReactions,
-    IntentsBitField.Flags.MessageContent
-] });
+const client: Client = new Client({
+    intents: [
+        IntentsBitField.Flags.Guilds,
+        IntentsBitField.Flags.GuildMembers,
+        IntentsBitField.Flags.GuildMessages,
+        IntentsBitField.Flags.GuildMessageReactions,
+        IntentsBitField.Flags.DirectMessages,
+        IntentsBitField.Flags.DirectMessageReactions,
+        IntentsBitField.Flags.MessageContent
+    ],
+    partials: [
+        Partials.GuildMember
+    ]
+});
 
 // add all commands to be handled
 client.commands = new Collection();

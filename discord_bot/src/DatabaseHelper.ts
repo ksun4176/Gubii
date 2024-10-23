@@ -1,5 +1,5 @@
 import { Guild, Prisma, PrismaClient } from "@prisma/client";
-import { APIRole, Role } from "discord.js";
+import { APIRole, Guild as Server, GuildMember, Role } from "discord.js";
 
 export enum ChannelPurposeType {
     Recruitment = 1,
@@ -176,19 +176,26 @@ export class DatabaseHelper {
     //#region User Helpers
     /**
      * Check if a user has ANY of the roles asked for.
-     * This will determine if they have permission to do said action
-     * @param userId the user to check
+     * This will determine if they have permission to do said action.
+     * If the user is the server owner, this will automatically return true.
+     * If no roles provided, this will automatically return false.
+     * @param user the user to check
+     * @param server the server we're checking in
      * @param rolesCriteria roles to check
      * @returns true if user has permission, false otherwise
      */
-    public async userHasPermission(userId: number, rolesCriteria: Prisma.UserRoleWhereInput[]) {
-        const relations = await this.__prisma.userRelation.findMany({
-            where: {
-                userId: userId,
-                role: { OR: rolesCriteria }
-            }
-        });
-        return relations.length > 0;
+    public async userHasPermission(user: GuildMember, server: Server, rolesCriteria: Prisma.UserRoleWhereInput[]) {
+        // check if server owner
+        const owner = await server.fetchOwner();
+        if (owner.id === user.id) {
+            return true;
+        }
+        let rolesRequired = await this.__prisma.userRole.findMany({ where: { OR: rolesCriteria } });
+        rolesRequired = rolesRequired.filter(role => !!role.discordId);
+        if (rolesRequired.length > 0) {
+            return user.roles.cache.hasAny(...rolesRequired.map(role => role.discordId!));
+        }
+        return false;
     }
     //#endregion User Helpers
 }

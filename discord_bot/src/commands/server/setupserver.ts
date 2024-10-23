@@ -22,16 +22,17 @@ const setupserverCommand: CommandInterface = {
         }
         await interaction.deferReply();
         const serverInfo = interaction.guild;
-        const ownerInfo = await serverInfo.fetchOwner();
 
         const adminRoleInfo = interaction.options.getRole(options.adminRole);
         let errorMessage = 'There was an issue setting up the server.\n';
         try {
-            const { prisma, caller } = await GetCommandInfo(interaction.user);
+            const { prisma, caller, databaseHelper } = await GetCommandInfo(interaction.user);
             
+            const discordCaller = await interaction.guild!.members.fetch(caller.discordId!);
             // check permission
-            if (ownerInfo.id !== caller.discordId) {
-                interaction.editReply('Only the server owner has permission to run this command');
+            const hasPermission = await databaseHelper.userHasPermission(discordCaller, serverInfo, []);
+            if (hasPermission) {
+                interaction.editReply('You do not have permission to run this command');
                 return;
             }
             

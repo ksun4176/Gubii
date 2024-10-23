@@ -1,6 +1,6 @@
 import { AutocompleteInteraction, BaseGuildTextChannel, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { CommandInterface, GetCommandInfo } from "../../CommandInterface";
-import { Guild, GuildApplicant, Prisma, PrismaClient, Server, User, UserRole } from "@prisma/client";
+import { Guild, GuildApplicant, Prisma, PrismaClient, Server, User } from "@prisma/client";
 import { DatabaseHelper, UserRoleType } from "../../DatabaseHelper";
 
 const subcommands = {
@@ -86,10 +86,10 @@ const appActionCommands: CommandInterface = {
                 case subcommands.accept:
                     const guildId = interaction.options.getInteger(options.guild)!;
                     const guild = await prisma.guild.findUniqueOrThrow({ where: { id: guildId } });
-                    await acceptAction(interaction, user, guild, prisma, caller, databaseHelper, application);
+                    await acceptAction(interaction, prisma, caller, databaseHelper, user, guild, application);
                     break;
                 case subcommands.decline:
-                    await declineAction(interaction, server, prisma, caller, databaseHelper, application);
+                    await declineAction(interaction, prisma, caller, databaseHelper, server, application);
                     break;
                 default:
                     await interaction.editReply('No action done');
@@ -146,84 +146,69 @@ const appActionCommands: CommandInterface = {
  * Accept a guild application.
  * This will also be used to transfer user between guilds.
  * @param interaction The discord interaction
- * @param user The user to accept
- * @param guild The guild to be accepted into
  * @param prisma Prisma Client
  * @param caller The user who called this interaction
  * @param databaseHelper database helper
+ * @param user The user to accept
+ * @param guild The guild to be accepted into
  * @param application The guild application if there is one
  * @returns The response to display to user
  */
 const acceptAction = async function(
     interaction: ChatInputCommandInteraction,
-    user: User,
-    guild: Guild,
     prisma: PrismaClient,
     caller: User,
     databaseHelper: DatabaseHelper,
+    user: User,
+    guild: Guild,
     application: GuildApplicant | null
 ): Promise<boolean> {
+    const discordCaller = await interaction.guild!.members.fetch(caller.discordId!);
+    const discordUser = await interaction.guild!.members.fetch(user.discordId!);
     // check if server owner OR admin OR guild management
     let roles: Prisma.UserRoleWhereInput[] = [
         { serverId: guild.serverId, roleType: UserRoleType.ServerOwner },
         { serverId: guild.serverId, roleType: UserRoleType.Administrator },
         { serverId: guild.serverId, roleType: UserRoleType.GuildLead, guildId: guild.id },
-        { serverId: guild.serverId, roleType: UserRoleType.GuildManagement, guildId: guild.id },
+        { serverId: guild.serverId, roleType: UserRoleType.GuildManagement, guildId: guild.id }
     ]
-    let hasPermission = await databaseHelper.userHasPermission(caller.id, roles);
+    const hasPermission = await databaseHelper.userHasPermission(discordCaller, interaction.guild!, roles);
     if (!hasPermission) {
         interaction.editReply('You do not have permission to run this command');
         return false;
     }
-    // get current roles
-    const currentRelations = await prisma.userRelation.findMany({ 
-        where: { 
-            user: user,
-            role: { serverId: guild.serverId }
-        },
-        include: { role: { include: { guild: true } } }
-    });
 
     // check if roles are new and need to be added
     const guildRole = await databaseHelper.getGuildRole(guild, UserRoleType.GuildMember);
-    const sharedGuildRole = await databaseHelper.getSharedGuildRole(guild, UserRoleType.GuildMember);
-    const rolesToAdd: UserRole[] = [];
-    if (guildRole && currentRelations.findIndex(relation => relation.roleId === guildRole.id) < 0) {
-        rolesToAdd.push(guildRole);
-    }
-    if (sharedGuildRole && currentRelations.findIndex(relation => relation.roleId === sharedGuildRole.id) < 0) {
-        rolesToAdd.push(sharedGuildRole);
-    }
-    if (rolesToAdd.length > 0) {
-        await prisma.userRelation.createMany( {
-            data: rolesToAdd.map(role => { return { userId: user.id, roleId: role.id } })
-        });
-        if (user.discordId) {
-            const discordUser = await interaction.guild!.members.fetch(user.discordId);
-            discordUser.roles.add(rolesToAdd.filter(role => !!role.discordId).map(role => role.discordId!));
-        }
+    if (guildRole?.discordId && !discordUser.roles.cache.has(guildRole.discordId)) {
+        discordUser.roles.add(guildRole.discordId);
     }
     if (application) {
-        await prisma.guildApplicant.delete({
-            where: { id: application.id },
-        });
+        await prisma.guildApplicant.delete({ where: { id: application.id } });
     }
-    
-    // check what guilds user is currently in so user can clean them up if need be
-    const currentGuilds = currentRelations.filter(relation => {
-        return relation.role.roleType === UserRoleType.GuildMember &&
-            relation.role.id !== guildRole?.id &&
-            relation.role.id !== sharedGuildRole?.id &&
-            relation.role.guild?.gameId === guild.gameId;
-    });
     let message = `'${user.name}' was accepted into '${guild.name}'\n`;
     console.log(message);
     await interaction.editReply(message);
+    
+    // find what guilds user is currently in so user can clean them all up if need be
+    let currentGuilds = await prisma.userRole.findMany({
+        where: {
+            id: { not: guildRole?.id }, // not guild to be added into
+            roleType: UserRoleType.GuildMember,
+            serverId: guild.serverId,
+            guild: {
+                guildId: { not: '' }, // not shared guild
+                gameId: guild.gameId
+            }
+        },
+        include: { guild: true }
+    });
+    currentGuilds = currentGuilds.filter(role => discordUser.roles.cache.has(role.discordId!)); // check that the user is in these guilds
     if (currentGuilds.length > 0) {
         if (interaction.channel && interaction.channel instanceof BaseGuildTextChannel) {
             message += `Is this a guild transfer? Respond with Yes if you want to remove these other guild roles:\n`;
-            for (let relation of currentGuilds) {
-                message += `- <@&${relation.role.discordId}> for '${relation.role.guild!.name}'\n`;
+            for (let role of currentGuilds) {
+                message += `- <@&${role.discordId}> for '${role.guild!.name}'\n`;
             }
             await interaction.editReply(message);
 
@@ -236,13 +221,7 @@ const acceptAction = async function(
                 });
                 const removeOldRoles = confirmMessages.first()!.content.toLowerCase();
                 if (removeOldRoles === 'yes' || removeOldRoles === 'y') {
-                    await prisma.userRelation.deleteMany({ 
-                        where: { OR: currentGuilds.map(relation => { return { id: relation.id } }) }
-                    });
-                    if (user.discordId) {
-                        const discordUser = await interaction.guild!.members.fetch(user.discordId);
-                        discordUser.roles.remove(currentGuilds.filter(relation => !!relation.role.discordId).map(relation => relation.role.discordId!));
-                    }
+                    discordUser.roles.remove(currentGuilds.map(role => role.discordId!));
                     followUpMessage = 'Old guild roles have been removed.';
                 }
                 else {
@@ -257,8 +236,8 @@ const acceptAction = async function(
         }
         else {
             message += `They are also already in these guilds (remove old roles if need be):\n`;
-            for (let relation of currentGuilds) {
-                message += `- <@&${relation.role.discordId}> for '${relation.role.guild!.name}'\n`;
+            for (let role of currentGuilds) {
+                message += `- <@&${role.discordId}> for '${role.guild!.name}'\n`;
             }
             await interaction.editReply(message);
         }
@@ -269,27 +248,28 @@ const acceptAction = async function(
 /**
  * Decline a guild application
  * @param interaction The discord interaction
- * @param server The server application is in
  * @param prisma Prisma Client
  * @param caller The user who called this interaction
  * @param databaseHelper database helper
+ * @param server The server application is in
  * @param application The guild application if there is one
  * @returns The response to display to user
  */
 const declineAction = async function(
     interaction: ChatInputCommandInteraction,
-    server: Server,
     prisma: PrismaClient,
     caller: User,
     databaseHelper: DatabaseHelper,
+    server: Server,
     application: GuildApplicant | null
 ): Promise<boolean> {
+    const discordCaller = await interaction.guild!.members.fetch(caller.discordId!);
     // check if server owner OR admin
     const roles: Prisma.UserRoleWhereInput[] = [
         { serverId: server.id, roleType: UserRoleType.ServerOwner },
-        { serverId: server.id, roleType: UserRoleType.Administrator },
+        { serverId: server.id, roleType: UserRoleType.Administrator }
     ]
-    const hasPermission = await databaseHelper.userHasPermission(caller.id, roles);
+    const hasPermission = await databaseHelper.userHasPermission(discordCaller, interaction.guild!, roles);
     if (!hasPermission) {
         interaction.editReply('You do not have permission to run this command');
         return false;
@@ -298,9 +278,7 @@ const declineAction = async function(
         interaction.editReply('There is no open application');
         return false;
     }
-    await prisma.guildApplicant.delete({
-        where: { id: application.id },
-    });
+    await prisma.guildApplicant.delete({ where: { id: application.id } });
 
     const message = 'Application was declined';
     console.log(message);
