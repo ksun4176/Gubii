@@ -148,6 +148,7 @@ const kickGuildCommand: CommandInterface = {
             }
             console.log(message);
             await submitted.editReply(message);
+            databaseHelper.writeToLogChannel(submitted.guild!, server.id, message);
         }
         catch (error) {
             console.error(error);

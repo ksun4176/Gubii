@@ -99,6 +99,7 @@ const addgameCommand: CommandInterface = {
             console.log(message);
             message += `You can now call /createguild to add guilds for this game.\n`
             await interaction.editReply(message);
+            databaseHelper.writeToLogChannel(interaction.guild, server.id, message);
         }
         catch (error) {
             console.error(error);

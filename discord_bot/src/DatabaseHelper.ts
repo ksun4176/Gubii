@@ -1,9 +1,10 @@
-import { Guild, Prisma, PrismaClient } from "@prisma/client";
-import { APIRole, Guild as Server, GuildMember, Role } from "discord.js";
+import { Guild, Prisma, PrismaClient, Server } from "@prisma/client";
+import { APIRole, Guild as DiscordServer, GuildMember, Role } from "discord.js";
 
 export enum ChannelPurposeType {
     Recruitment = 1,
-    Applicant = 2
+    Applicant = 2,
+    BotLog = 3
 }
 
 export enum UserRoleType {
@@ -178,13 +179,14 @@ export class DatabaseHelper {
      * Check if a user has ANY of the roles asked for.
      * This will determine if they have permission to do said action.
      * If the user is the server owner, this will automatically return true.
-     * If no roles provided, this will automatically return false.
+     * Otherwise if no roles provided, this will automatically return false.
+     * Lastly, check the roles.
      * @param user the user to check
-     * @param server the server we're checking in
+     * @param server the discord server
      * @param rolesCriteria roles to check
      * @returns true if user has permission, false otherwise
      */
-    public async userHasPermission(user: GuildMember, server: Server, rolesCriteria: Prisma.UserRoleWhereInput[]) {
+    public async userHasPermission(user: GuildMember, server: DiscordServer, rolesCriteria: Prisma.UserRoleWhereInput[]) {
         // check if server owner
         const owner = await server.fetchOwner();
         if (owner.id === user.id) {
@@ -198,4 +200,27 @@ export class DatabaseHelper {
         return false;
     }
     //#endregion User Helpers
+
+    //#region Channel Helpers
+    /**
+     * Write a message to the log channel if it exists.
+     * @param discordServer the discord server
+     * @param serverId the database server ID
+     * @param message the message to write
+     */
+    public async writeToLogChannel(discordServer: DiscordServer, serverId: number, message: string) {
+        let logChannel = await this.__prisma.channelPurpose.findFirst({
+            where: {
+                serverId: serverId,
+                channelType: ChannelPurposeType.BotLog
+            }
+        });
+        if (logChannel) {
+            const discordLogChannel = await discordServer.channels.fetch(logChannel.discordId);
+            if (discordLogChannel && discordLogChannel.isTextBased()) {
+                discordLogChannel.send(message);
+            }
+        }
+    }
+    //#endregion Channel Helpers
 }

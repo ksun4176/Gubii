@@ -17,7 +17,8 @@ const main = async () => {
     // Seed channel_purpose_types
     const channelPurposeTypes = [
         'Recruitment',
-        'Applicant'
+        'Applicant',
+        'BotLog',
     ]
     await seed.channelPurposeType(channelPurposeTypes.map((type, index) => { return { id: index+1, name: type } }));
 

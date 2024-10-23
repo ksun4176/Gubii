@@ -134,6 +134,7 @@ const createguildCommand: CommandInterface = {
 
             console.log(message);
             await interaction.editReply(message);
+            databaseHelper.writeToLogChannel(interaction.guild, server.id, message);
         }
         catch (error) {
             console.error(error);
