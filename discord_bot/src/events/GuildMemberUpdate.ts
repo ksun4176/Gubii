@@ -27,7 +27,7 @@ const updateSharedRoles = async (member: GuildMember) => {
             
     // get server + guild roles
     const server = await prisma.server.findUniqueOrThrow({ where: { discordId: member.guild.id } });
-    const placeholderGuilds = await databaseHelper.getPlaceholderGuilds(server.id);
+    const gameGuilds = await databaseHelper.getGameGuilds(server.id);
     const guildRoles = await prisma.userRole.findMany({
         where: { OR: [
             UserRoleType.GuildLead,
@@ -47,7 +47,7 @@ const updateSharedRoles = async (member: GuildMember) => {
         if (!role.discordId) {
             continue;
         }
-        if (placeholderGuilds.findIndex(guild => guild.id === role.guildId) < 0) {
+        if (gameGuilds.findIndex(guild => guild.id === role.guildId) < 0) {
             continue;
         }
         const discordId = role.discordId;
@@ -70,7 +70,7 @@ const updateSharedRoles = async (member: GuildMember) => {
         if (!role.discordId) {
             continue;
         }
-        if (placeholderGuilds.findIndex(guild => guild.id === role.guildId) >= 0) {
+        if (gameGuilds.findIndex(guild => guild.id === role.guildId) >= 0) {
             continue;
         }
         const discordId = role.discordId;

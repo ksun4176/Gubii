@@ -151,7 +151,7 @@ const setupserverCommand: CommandInterface = {
             console.log(message);
             message += `You can now call /addgame to add support for games you want on your server.\n`
             await interaction.editReply(message);
-            databaseHelper.writeToLogChannel(interaction.guild, server.id, message);
+            await databaseHelper.writeToLogChannel(interaction.guild, server.id, message);
         }
         catch (error) {
             console.error(error);

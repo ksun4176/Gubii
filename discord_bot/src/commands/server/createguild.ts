@@ -134,7 +134,7 @@ const createguildCommand: CommandInterface = {
 
             console.log(message);
             await interaction.editReply(message);
-            databaseHelper.writeToLogChannel(interaction.guild, server.id, message);
+            await databaseHelper.writeToLogChannel(interaction.guild, server.id, message);
         }
         catch (error) {
             console.error(error);
@@ -151,7 +151,7 @@ const createguildCommand: CommandInterface = {
         try {
             const { prisma, databaseHelper } = await GetCommandInfo(interaction.user);
             const server = await prisma.server.findUniqueOrThrow({ where: {discordId: serverInfo.id } });
-            const gameGuilds = await databaseHelper.getPlaceholderGuilds(server.id);
+            const gameGuilds = await databaseHelper.getGameGuilds(server.id);
             await interaction.respond(
                 gameGuilds.map(guild => ({ name: guild.game.name, value: guild.game.id })),
             );

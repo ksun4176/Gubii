@@ -1,4 +1,4 @@
-import { Guild, Prisma, PrismaClient, Server } from "@prisma/client";
+import { Guild, Prisma, PrismaClient } from "@prisma/client";
 import { APIRole, Guild as DiscordServer, GuildMember, Role } from "discord.js";
 
 export enum ChannelPurposeType {
@@ -41,6 +41,59 @@ export class DatabaseHelper {
             }
         }));
     }
+
+    /**
+     * Create a ChannelPurpose object for the game
+     * @param guild Original guild to see if there is a shared guild
+     * @param channelType type to assign
+     * @returns ChannelPurpose object
+     */
+    public async creatGameChannel(guild: Guild, channelType: ChannelPurposeType, channelDiscordId: string) {
+        const gameGuild = await this.getGameGuild(guild);
+        if (!gameGuild) {
+            return null;
+        }
+        return await this.__prisma.channelPurpose.upsert({
+            create: {
+                serverId: gameGuild.serverId,
+                guildId: gameGuild.id,
+                channelType: channelType,
+                discordId: channelDiscordId
+            },
+            where: {
+                channelType_serverId_guildId: {
+                    channelType: channelType,
+                    serverId: gameGuild.serverId,
+                    guildId: gameGuild.id,
+                }
+            },
+            update: {
+                discordId: channelDiscordId
+            }
+        });
+    }
+
+    /**
+     * Get the channel for the game
+     * @param guild Original guild to see if there is a shared guild
+     * @param channelType channel type
+     * @returns user role if found
+     */
+    public async getGameChannel(guild: Guild, channelType: ChannelPurposeType) {
+        const gameGuild = await this.getGameGuild(guild);
+        if (!gameGuild) {
+            return null;
+        }
+        return await this.__prisma.channelPurpose.findUnique({ 
+            where: {
+                channelType_serverId_guildId: {
+                    channelType: channelType,
+                    serverId: gameGuild.serverId,
+                    guildId: gameGuild.id,
+                }
+            }
+        });
+    }
     //#endregion Server Helpers
     
     //#region Guild Helpers
@@ -51,7 +104,7 @@ export class DatabaseHelper {
      * @param serverId ID of server
      * @returns The created guild
      */
-    public async createPlaceholderGuild(gameId: number, serverId: number) {
+    public async createGameGuild(gameId: number, serverId: number) {
         return await this.__prisma.guild.upsert({
             create: {
                 name: `GameGuildPlaceholder${gameId}`,
@@ -77,11 +130,30 @@ export class DatabaseHelper {
     }
 
     /**
+     * Get the shared guild if its active
+     * @param guild Original guild to see if there is a shared guild
+     * @returns Game guild
+     */
+    public async getGameGuild(guild: Guild) {
+        const gameGuild = await this.__prisma.guild.findUnique({
+            where: {
+                gameId_guildId_serverId: {
+                    gameId: guild.gameId,
+                    guildId: '',
+                    serverId: guild.serverId
+                },
+                active: true
+            }
+        });
+        return gameGuild;
+    }
+
+    /**
      * Get placeholder guilds within a server.
      * @param serverId ID of server
      * @returns Get active guilds in a server that say if a server handles a game
      */
-    public async getPlaceholderGuilds(serverId: number) {
+    public async getGameGuilds(serverId: number) {
         return await this.__prisma.guild.findMany({
             where: {
                 serverId: serverId,
@@ -149,16 +221,7 @@ export class DatabaseHelper {
      * @returns user role if found
      */
     public async getSharedGuildRole(guild: Guild, roleType: UserRoleType) {
-        const gameGuild = await this.__prisma.guild.findUnique({
-            where: {
-                gameId_guildId_serverId: {
-                    gameId: guild.gameId,
-                    guildId: '',
-                    serverId: guild.serverId
-                },
-                active: true
-            }
-        });
+        const gameGuild = await this.getGameGuild(guild);
         if (!gameGuild) {
             return null;
         }
@@ -209,17 +272,22 @@ export class DatabaseHelper {
      * @param message the message to write
      */
     public async writeToLogChannel(discordServer: DiscordServer, serverId: number, message: string) {
-        let logChannel = await this.__prisma.channelPurpose.findFirst({
-            where: {
-                serverId: serverId,
-                channelType: ChannelPurposeType.BotLog
+        try {
+            let logChannel = await this.__prisma.channelPurpose.findFirst({
+                where: {
+                    serverId: serverId,
+                    channelType: ChannelPurposeType.BotLog
+                }
+            });
+            if (logChannel) {
+                const discordLogChannel = await discordServer.channels.fetch(logChannel.discordId);
+                if (discordLogChannel && discordLogChannel.isTextBased()) {
+                    await discordLogChannel.send(message);
+                }
             }
-        });
-        if (logChannel) {
-            const discordLogChannel = await discordServer.channels.fetch(logChannel.discordId);
-            if (discordLogChannel && discordLogChannel.isTextBased()) {
-                discordLogChannel.send(message);
-            }
+        }
+        catch (error) {
+            console.log(error);
         }
     }
     //#endregion Channel Helpers

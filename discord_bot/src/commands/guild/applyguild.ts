@@ -38,8 +38,8 @@ const applyguildCommand: CommandInterface = {
             const server = await prisma.server.findUniqueOrThrow({ where: { discordId: serverInfo.id } });
 
             if (!guildId) {
-                const placeholderGuilds = await databaseHelper.getPlaceholderGuilds(server.id);
-                const gameGuild = placeholderGuilds.find(guild => guild.gameId = gameId);
+                const gameGuilds = await databaseHelper.getGameGuilds(server.id);
+                const gameGuild = gameGuilds.find(guild => guild.gameId = gameId);
                 if (gameGuild) {
                     guildId = gameGuild.id
                 }
@@ -77,7 +77,7 @@ const applyguildCommand: CommandInterface = {
 
             switch (focusedOption.name) {
                 case options.game:
-                    const gameGuilds = await databaseHelper.getPlaceholderGuilds(server.id);
+                    const gameGuilds = await databaseHelper.getGameGuilds(server.id);
                     await interaction.respond(
                         gameGuilds.map(guild => ({ name: guild.game.name, value: guild.game.id }))
                     );

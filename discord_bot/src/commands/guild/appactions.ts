@@ -115,7 +115,7 @@ const appActionCommands: CommandInterface = {
             
             switch (focusedOption.name) {
                 case options.game:
-                    const gameGuilds = await databaseHelper.getPlaceholderGuilds(server.id);
+                    const gameGuilds = await databaseHelper.getGameGuilds(server.id);
                     await interaction.respond(
                         gameGuilds.map(guild => ({ name: guild.game.name, value: guild.game.id }))
                     );
@@ -189,7 +189,7 @@ const acceptAction = async function(
     let message = `'${user.name}' was accepted into '${guild.name}'\n`;
     console.log(message);
     await interaction.editReply(message);
-    databaseHelper.writeToLogChannel(interaction.guild!, guild.serverId, message);
+    await databaseHelper.writeToLogChannel(interaction.guild!, guild.serverId, message);
     
     // find what guilds user is currently in so user can clean them all up if need be
     let currentGuilds = await prisma.userRole.findMany({
@@ -284,7 +284,7 @@ const declineAction = async function(
     const message = 'Application was declined';
     console.log(message);
     await interaction.editReply(message);
-    databaseHelper.writeToLogChannel(interaction.guild!, server.id, message);
+    await databaseHelper.writeToLogChannel(interaction.guild!, server.id, message);
     return true;
 }
 export = appActionCommands;

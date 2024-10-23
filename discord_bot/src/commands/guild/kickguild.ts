@@ -148,7 +148,7 @@ const kickGuildCommand: CommandInterface = {
             }
             console.log(message);
             await submitted.editReply(message);
-            databaseHelper.writeToLogChannel(submitted.guild!, server.id, message);
+            await databaseHelper.writeToLogChannel(submitted.guild!, server.id, message);
         }
         catch (error) {
             console.error(error);
@@ -169,7 +169,7 @@ const kickGuildCommand: CommandInterface = {
             
             switch (focusedOption.name) {
                 case options.game:
-                    const gameGuilds = await databaseHelper.getPlaceholderGuilds(server.id);
+                    const gameGuilds = await databaseHelper.getGameGuilds(server.id);
                     await interaction.respond(
                         gameGuilds.map(guild => ({ name: guild.game.name, value: guild.game.id }))
                     );
