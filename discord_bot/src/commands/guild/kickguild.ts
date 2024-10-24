@@ -1,4 +1,4 @@
-import { ActionRowBuilder, AutocompleteInteraction, ChatInputCommandInteraction, ModalActionRowComponentBuilder, ModalBuilder, SlashCommandBuilder, TextInputBuilder, TextInputStyle } from "discord.js";
+import { ActionRowBuilder, AutocompleteInteraction, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { CommandInterface, GetCommandInfo } from "../../CommandInterface";
 import { Prisma } from "@prisma/client";
 import { UserRoleType } from "../../DatabaseHelper";
@@ -9,8 +9,9 @@ const options = {
     guild: 'guild'
 }
 
-const modalFields = {
-    confirmKickInput: 'confirmKickInput'
+const buttons = {
+    confirmKick: 'confirmKick',
+    cancelKick: 'cancelKick'
 }
 
 const kickGuildCommand: CommandInterface = {
@@ -44,115 +45,121 @@ const kickGuildCommand: CommandInterface = {
         const userInfo = interaction.options.getUser(options.user)!;
         const gameId = interaction.options.getInteger(options.game)!;
         const guildId = interaction.options.getInteger(options.guild);
-
-        const modal = new ModalBuilder()
-			.setCustomId('confirmKickModal')
-			.setTitle('Kick Confirmation?');
             
-        const confirmInput = new TextInputBuilder()
-            .setCustomId(modalFields.confirmKickInput)
-            .setLabel('Are you sure you want to remove guild roles?')
-            .setMaxLength(3)
-            .setMinLength(1)
-            .setPlaceholder('Respond with Yes or No')
-            .setRequired(true)
-            .setStyle(TextInputStyle.Short);
+        const confirmButton = new ButtonBuilder()
+            .setCustomId(buttons.confirmKick)
+            .setLabel('Confirm Kick')
+            .setStyle(ButtonStyle.Danger);
+        
+        const cancelButton = new ButtonBuilder()
+            .setCustomId(buttons.cancelKick)
+            .setLabel('Cancel')
+            .setStyle(ButtonStyle.Secondary);
 
-		const firstActionRow = new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(confirmInput);
-        modal.addComponents(firstActionRow);
-        await interaction.showModal(modal);
+        const actionRow = new ActionRowBuilder<ButtonBuilder>()
+            .addComponents(confirmButton, cancelButton);
+        
+        const response = await interaction.reply({
+            content: `Are you sure you want to remove guild roles?`,
+            components: [actionRow]
+        });
 
-        const submitted = await interaction.awaitModalSubmit({ time: 10000 });
-        const confirm = submitted.fields.getTextInputValue(modalFields.confirmKickInput).toLowerCase();
-        if (confirm !== 'y' && confirm !== 'yes') {
-            await submitted.reply({
-                content: 'Action was canceled',
-                ephemeral: true
-            });
-            return;
-        }
-
-        await submitted.deferReply();
         try {
-            const { prisma, caller, databaseHelper } = await GetCommandInfo(interaction.user);
-
-            const server = await prisma.server.findUniqueOrThrow({ where: { discordId: serverInfo.id } });
-            const user = await prisma.user.findUniqueOrThrow({ where: {discordId: userInfo.id } });
-
-            const discordCaller = await submitted.guild!.members.fetch(caller.discordId!);
-            const discordUser = await submitted.guild!.members.fetch(user.discordId!);
-
-            let currentGuilds = await prisma.userRole.findMany({
-                where: {
-                    roleType: UserRoleType.GuildMember,
-                    serverId: server.id,
-                    guild: {
-                        guildId: { not: '' }, // not shared guild
-                        gameId: gameId
-                    }
-                },
-                include: { guild: true }
+            const confirmation = await response.awaitMessageComponent({
+                filter: i => i.user.id === interaction.user.id,
+                time: 10000
             });
-            currentGuilds = currentGuilds.filter(role => 
-                discordUser.roles.cache.has(role.discordId!) && // check that the user is in these guilds
-                (!guildId || role.guildId === guildId)
-            );
-            
-            if (currentGuilds.length === 0) {
-                await submitted.editReply('This user is not in any guilds to be removed from.');
-                return;
-            }
 
-            let guildsNotKicked: typeof currentGuilds = [];
-            let guildsToKick: typeof currentGuilds = [];
-            // check if server owner OR admin
-            let roles: Prisma.UserRoleWhereInput[] = [
-                { serverId: server.id, roleType: UserRoleType.ServerOwner },
-                { serverId: server.id, roleType: UserRoleType.Administrator }
-            ];
-            let hasPermission = await databaseHelper.userHasPermission(discordCaller, serverInfo, roles);
-            if (hasPermission) {
-                guildsToKick = currentGuilds;
+            if (confirmation.customId === buttons.cancelKick) {
+                await confirmation.update({ content: 'Kick was canceled', components: [] });
             }
-            else {
-                // check if they have guild management
-                for (let role of currentGuilds) {
-                    roles = [
-                        { serverId: server.id, roleType: UserRoleType.GuildLead, guildId: role.guildId },
-                        { serverId: server.id, roleType: UserRoleType.GuildManagement, guildId: role.guildId },
+            else if (confirmation.customId === buttons.confirmKick) {
+                await confirmation.deferUpdate();
+                try {
+                    const { prisma, caller, databaseHelper } = await GetCommandInfo(interaction.user);
+        
+                    const server = await prisma.server.findUniqueOrThrow({ where: { discordId: serverInfo.id } });
+                    const user = await prisma.user.findUniqueOrThrow({ where: {discordId: userInfo.id } });
+        
+                    const discordCaller = await interaction.guild.members.fetch(caller.discordId!);
+                    const discordUser = await interaction.guild.members.fetch(user.discordId!);
+        
+                    let currentGuilds = await prisma.userRole.findMany({
+                        where: {
+                            roleType: UserRoleType.GuildMember,
+                            serverId: server.id,
+                            guild: {
+                                guildId: { not: '' }, // not shared guild
+                                gameId: gameId
+                            }
+                        },
+                        include: { guild: true }
+                    });
+                    currentGuilds = currentGuilds.filter(role => 
+                        discordUser.roles.cache.has(role.discordId!) && // check that the user is in these guilds
+                        (!guildId || role.guildId === guildId)  // if guildId is provided, only match that one
+                    );
+                    
+                    if (currentGuilds.length === 0) {
+                        await interaction.editReply({ content: 'This user is not in any guilds to be removed from.', components: [] });
+                        return;
+                    }
+        
+                    let guildsNotKicked: typeof currentGuilds = [];
+                    let guildsToKick: typeof currentGuilds = [];
+                    // check if server owner OR admin
+                    let roles: Prisma.UserRoleWhereInput[] = [
+                        { serverId: server.id, roleType: UserRoleType.ServerOwner },
+                        { serverId: server.id, roleType: UserRoleType.Administrator }
                     ];
-                    hasPermission = await databaseHelper.userHasPermission(discordCaller, serverInfo, roles);
+                    let hasPermission = await databaseHelper.userHasPermission(discordCaller, serverInfo, roles);
                     if (hasPermission) {
-                        guildsToKick.push(role);
+                        guildsToKick = currentGuilds;
                     }
                     else {
-                        guildsNotKicked.push(role);
+                        // check if they have guild management
+                        for (let role of currentGuilds) {
+                            roles = [
+                                { serverId: server.id, roleType: UserRoleType.GuildLead, guildId: role.guildId },
+                                { serverId: server.id, roleType: UserRoleType.GuildManagement, guildId: role.guildId },
+                            ];
+                            hasPermission = await databaseHelper.userHasPermission(discordCaller, serverInfo, roles);
+                            if (hasPermission) {
+                                guildsToKick.push(role);
+                            }
+                            else {
+                                guildsNotKicked.push(role);
+                            }
+                        }
                     }
+                    if (guildsToKick.length === 0) {
+                        await interaction.editReply({ content: 'You do not have permission to run this command', components: [] });
+                        return;
+                    }
+                    discordUser.roles.remove(guildsToKick.map(role => role.discordId!));
+        
+                    let message = `'${user.name}' was removed from these guilds:\n`;
+                    for (let role of guildsToKick) {
+                        message += `- '${role.guild!.name}'\n`;
+                    }
+                    if (guildsNotKicked.length > 0) {
+                        message += `You did not have permission to kick from these guilds:\n`;
+                        for (let role of guildsNotKicked) {
+                            message += `- '${role.guild!.name}'\n`;
+                        }
+                    }
+                    console.log(message);
+                    await interaction.editReply({ content: message, components: [] });
+                    await databaseHelper.writeToLogChannel(interaction.guild, server.id, message);
+                }
+                catch (error) {
+                    console.error(error);
+                    await interaction.editReply({ content: 'There was an issue taking this action.', components: [] });
                 }
             }
-            if (guildsToKick.length === 0) {
-                await submitted.editReply('You do not have permission to run this command');
-                return;
-            }
-            discordUser.roles.remove(guildsToKick.map(role => role.discordId!));
-
-            let message = `'${user.name}' was removed from these guilds:\n`;
-            for (let role of guildsToKick) {
-                message += `- '${role.guild!.name}'\n`;
-            }
-            if (guildsNotKicked.length > 0) {
-                message += `You did not have permission to kick from these guilds:\n`;
-                for (let role of guildsNotKicked) {
-                    message += `- '${role.guild!.name}'\n`;
-                }
-            }
-            console.log(message);
-            await submitted.editReply(message);
-            await databaseHelper.writeToLogChannel(submitted.guild!, server.id, message);
         }
         catch (error) {
-            console.error(error);
-            await interaction.editReply('There was an issue taking this action.');
+            await interaction.editReply({ content: 'Confirmation not received, cancelling...', components: [] });
         }
     },
 

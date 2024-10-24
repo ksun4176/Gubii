@@ -1,4 +1,4 @@
-import { AutocompleteInteraction, BaseGuildTextChannel, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import { ActionRowBuilder, AutocompleteInteraction, BaseGuildTextChannel, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { CommandInterface, GetCommandInfo } from "../../CommandInterface";
 import { Guild, GuildApplicant, Prisma, PrismaClient, Server, User } from "@prisma/client";
 import { DatabaseHelper, UserRoleType } from "../../DatabaseHelper";
@@ -12,6 +12,11 @@ const options = {
     game: 'game',
     guild: 'guild',
     user: 'user'
+}
+
+const buttons = {
+    yesRemove: 'yesRemove',
+    noRemove: 'noRemove'
 }
 
 const appActionCommands: CommandInterface = {
@@ -207,33 +212,46 @@ const acceptAction = async function(
     currentGuilds = currentGuilds.filter(role => discordUser.roles.cache.has(role.discordId!)); // check that the user is in these guilds
     if (currentGuilds.length > 0) {
         if (interaction.channel && interaction.channel instanceof BaseGuildTextChannel) {
-            message += `Is this a guild transfer? Respond with Yes if you want to remove these other guild roles:\n`;
+            let followUpMessage = `Is this a guild transfer? If so, we will remove these old guild roles:\n`;
             for (let role of currentGuilds) {
-                message += `- <@&${role.discordId}> for '${role.guild!.name}'\n`;
+                followUpMessage += `- <@&${role.discordId}> for '${role.guild!.name}'\n`;
             }
-            await interaction.editReply(message);
 
-            let followUpMessage = '';
+            const yesButton = new ButtonBuilder()
+                .setCustomId(buttons.yesRemove)
+                .setLabel('Yes')
+                .setStyle(ButtonStyle.Primary);
+            
+            const noButton = new ButtonBuilder()
+                .setCustomId(buttons.noRemove)
+                .setLabel('No')
+                .setStyle(ButtonStyle.Secondary);
+
+            const actionRow = new ActionRowBuilder<ButtonBuilder>()
+                .addComponents(yesButton, noButton);
+            
+            const response = await interaction.followUp({
+                content: followUpMessage,
+                components: [actionRow]
+            });
+
             try {
-                const confirmMessages = await interaction.channel.awaitMessages({
-                    filter: message => message.author.id === caller.discordId,
-                    max: 1,
-                    time: 10000,
+                const confirmation = await response.awaitMessageComponent({
+                    filter: i => i.user.id === interaction.user.id,
+                    time: 10000
                 });
-                const removeOldRoles = confirmMessages.first()!.content.toLowerCase();
-                if (removeOldRoles === 'yes' || removeOldRoles === 'y') {
+    
+                if (confirmation.customId === buttons.noRemove) {
+                    await confirmation.update({ content: 'OK, user now belongs to multiple guilds.', components: [] });
+                }
+                else if (confirmation.customId === buttons.yesRemove) {
                     discordUser.roles.remove(currentGuilds.map(role => role.discordId!));
-                    followUpMessage = 'Old guild roles have been removed.';
+                    await confirmation.update({ content: 'Old guild roles have been removed.', components: [] })
                 }
-                else {
-                    followUpMessage = 'OK, user now belongs to multiple guilds.';
-                }
-            }
+            } 
             catch (error) {
-                console.log('No response received');
-                followUpMessage = 'No response so old guild roles were kept';
+                await response.edit({ content: 'Confirmation not received, old guild roles were kept...', components: [] });
             }
-            await interaction.followUp(followUpMessage);
         }
         else {
             message += `They are also already in these guilds (remove old roles if need be):\n`;
