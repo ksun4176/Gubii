@@ -1,11 +1,13 @@
-import { ActionRowBuilder, AutocompleteInteraction, BaseGuildTextChannel, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import { ActionRowBuilder, AutocompleteInteraction, BaseGuildTextChannel, ButtonBuilder, ButtonStyle, ChannelType, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { CommandInterface, GetCommandInfo } from "../../CommandInterface";
-import { Guild, GuildApplicant, Prisma, PrismaClient, Server, User } from "@prisma/client";
-import { DatabaseHelper, UserRoleType } from "../../DatabaseHelper";
+import { Guild, Prisma, PrismaClient, Server, User } from "@prisma/client";
+import { ChannelPurposeType, DatabaseHelper, UserRoleType } from "../../DatabaseHelper";
+import { getChannelThread } from "../../DiscordHelper";
 
 const subcommands = {
     accept: 'accept',
-    decline: 'decline'
+    decline: 'decline',
+    apply: 'apply'
 }
 
 const options = {
@@ -60,6 +62,22 @@ const appActionCommands: CommandInterface = {
                         .setDescription('user to decline')
                         .setRequired(true)
                 )
+        )
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName(subcommands.apply)
+                .setDescription('apply to a guild')
+                .addIntegerOption(option =>
+                    option.setName(options.game)
+                        .setDescription('game to apply for')
+                        .setRequired(true)
+                        .setAutocomplete(true)
+                )
+                .addIntegerOption(option =>
+                    option.setName(options.guild)
+                        .setDescription('guild to specifically apply to')
+                        .setAutocomplete(true)
+                )
         ),
     
     async execute(interaction: ChatInputCommandInteraction) {
@@ -68,33 +86,20 @@ const appActionCommands: CommandInterface = {
             return;
         }
         await interaction.deferReply();
-        const serverInfo = interaction.guild;
-
         const subcommand = interaction.options.getSubcommand();
         const gameId = interaction.options.getInteger(options.game)!;
-        const userInfo = interaction.options.getUser(options.user)!;
-        
         try {
             const { prisma, caller, databaseHelper } = await GetCommandInfo(interaction.user);
-            const server = await prisma.server.findUniqueOrThrow({ where: { discordId: serverInfo.id } });
-            const user = await prisma.user.findUniqueOrThrow({ where: {discordId: userInfo.id } });
-            const application = await prisma.guildApplicant.findUnique({
-                where: {
-                    userId_gameId_serverId: {
-                        userId: user.id,
-                        gameId: gameId,
-                        serverId: server.id
-                    }
-                }
-            });
+            const server = await prisma.server.findUniqueOrThrow({ where: { discordId: interaction.guild.id } });
             switch (subcommand) {
                 case subcommands.accept:
-                    const guildId = interaction.options.getInteger(options.guild)!;
-                    const guild = await prisma.guild.findUniqueOrThrow({ where: { id: guildId } });
-                    await acceptAction(interaction, prisma, caller, databaseHelper, user, guild, application);
+                    await acceptAction(interaction, server, gameId, prisma, caller, databaseHelper);
                     break;
                 case subcommands.decline:
-                    await declineAction(interaction, prisma, caller, databaseHelper, server, application);
+                    await declineAction(interaction, server, gameId, prisma, caller, databaseHelper);
+                    break;
+                case subcommands.apply:
+                    await applyAction(interaction, server, gameId, prisma, caller, databaseHelper);
                     break;
                 default:
                     await interaction.editReply('No action done');
@@ -151,25 +156,40 @@ const appActionCommands: CommandInterface = {
  * Accept a guild application.
  * This will also be used to transfer user between guilds.
  * @param interaction The discord interaction
+ * @param server The server application is in
+ * @param gameId game application is for
  * @param prisma Prisma Client
  * @param caller The user who called this interaction
  * @param databaseHelper database helper
- * @param user The user to accept
- * @param guild The guild to be accepted into
- * @param application The guild application if there is one
  * @returns The response to display to user
  */
 const acceptAction = async function(
     interaction: ChatInputCommandInteraction,
+    server: Server,
+    gameId: number,
     prisma: PrismaClient,
     caller: User,
-    databaseHelper: DatabaseHelper,
-    user: User,
-    guild: Guild,
-    application: GuildApplicant | null
+    databaseHelper: DatabaseHelper
 ): Promise<boolean> {
-    const discordCaller = await interaction.guild!.members.fetch(caller.discordId!);
-    const discordUser = await interaction.guild!.members.fetch(user.discordId!);
+    const userInfo = interaction.options.getUser(options.user)!;
+    const guildId = interaction.options.getInteger(options.guild)!;
+
+    const user = await prisma.user.findUniqueOrThrow({ where: {discordId: userInfo.id } });
+    const guild = await prisma.guild.findUniqueOrThrow({ where: { id: guildId } });
+    const application = await prisma.guildApplicant.findUnique({
+        where: {
+            userId_gameId_serverId: {
+                userId: user.id,
+                gameId: gameId,
+                serverId: server.id
+            }
+        }
+    });
+
+    const discordServer = interaction.guild!;
+    const discordCaller = await discordServer.members.fetch(caller.discordId!);
+    const discordUser = await discordServer.members.fetch(user.discordId!);
+
     // check if server owner OR admin OR guild management
     let roles: Prisma.UserRoleWhereInput[] = [
         { serverId: guild.serverId, roleType: UserRoleType.ServerOwner },
@@ -177,7 +197,7 @@ const acceptAction = async function(
         { serverId: guild.serverId, roleType: UserRoleType.GuildLead, guildId: guild.id },
         { serverId: guild.serverId, roleType: UserRoleType.GuildManagement, guildId: guild.id }
     ]
-    const hasPermission = await databaseHelper.userHasPermission(discordCaller, interaction.guild!, roles);
+    const hasPermission = await databaseHelper.userHasPermission(discordCaller, discordServer, roles);
     if (!hasPermission) {
         interaction.editReply('You do not have permission to run this command');
         return false;
@@ -194,7 +214,7 @@ const acceptAction = async function(
     let message = `'${user.name}' was accepted into '${guild.name}'\n`;
     console.log(message);
     await interaction.editReply(message);
-    await databaseHelper.writeToLogChannel(interaction.guild!, guild.serverId, message);
+    await databaseHelper.writeToLogChannel(discordServer, guild.serverId, message);
     
     // find what guilds user is currently in so user can clean them all up if need be
     let currentGuilds = await prisma.userRole.findMany({
@@ -267,28 +287,43 @@ const acceptAction = async function(
 /**
  * Decline a guild application
  * @param interaction The discord interaction
+ * @param server The server application is in
+ * @param gameId game application is for
  * @param prisma Prisma Client
  * @param caller The user who called this interaction
  * @param databaseHelper database helper
- * @param server The server application is in
- * @param application The guild application if there is one
  * @returns The response to display to user
  */
 const declineAction = async function(
     interaction: ChatInputCommandInteraction,
+    server: Server,
+    gameId: number,
     prisma: PrismaClient,
     caller: User,
     databaseHelper: DatabaseHelper,
-    server: Server,
-    application: GuildApplicant | null
 ): Promise<boolean> {
-    const discordCaller = await interaction.guild!.members.fetch(caller.discordId!);
+    const userInfo = interaction.options.getUser(options.user)!;
+
+    const user = await prisma.user.findUniqueOrThrow({ where: {discordId: userInfo.id } });
+    const application = await prisma.guildApplicant.findUnique({
+        where: {
+            userId_gameId_serverId: {
+                userId: user.id,
+                gameId: gameId,
+                serverId: server.id
+            }
+        }
+    });
+    
+    const discordServer = interaction.guild!;
+    const discordCaller = await discordServer.members.fetch(caller.discordId!);
+    
     // check if server owner OR admin
     const roles: Prisma.UserRoleWhereInput[] = [
         { serverId: server.id, roleType: UserRoleType.ServerOwner },
         { serverId: server.id, roleType: UserRoleType.Administrator }
     ]
-    const hasPermission = await databaseHelper.userHasPermission(discordCaller, interaction.guild!, roles);
+    const hasPermission = await databaseHelper.userHasPermission(discordCaller, discordServer, roles);
     if (!hasPermission) {
         interaction.editReply('You do not have permission to run this command');
         return false;
@@ -302,8 +337,112 @@ const declineAction = async function(
     const message = 'Application was declined';
     console.log(message);
     await interaction.editReply(message);
-    await databaseHelper.writeToLogChannel(interaction.guild!, server.id, message);
+    await databaseHelper.writeToLogChannel(discordServer, server.id, message);
+    return true;
+}
+
+/**
+ * Apply to a guild.
+ * @param interaction The discord interaction
+ * @param server The server application is in
+ * @param gameId game application is for
+ * @param prisma Prisma Client
+ * @param caller The user who called this interaction
+ * @param databaseHelper database helper
+ * @returns The response to display to user
+ */
+const applyAction = async function(
+    interaction: ChatInputCommandInteraction,
+    server: Server,
+    gameId: number,
+    prisma: PrismaClient,
+    caller: User,
+    databaseHelper: DatabaseHelper
+): Promise<boolean> {
+    let guildId = interaction.options.getInteger(options.guild);
+
+    let guild: Guild | null | undefined = null;
+    if (guildId) {
+        guild = await prisma.guild.findUnique({ where: { id: guildId } });
+    }
+    else {
+        const gameGuilds = await databaseHelper.getGameGuilds(server.id);
+        guild = gameGuilds.find(guild => guild.gameId = gameId);
+    }
+
+    if (!guild) {
+        throw new Error('Game not supported in server');
+    }
+
+    // get management roles
+    const managementRoles = await prisma.userRole.findMany({ where: { OR: [
+        {
+            roleType: UserRoleType.GuildLead,
+            server: server,
+            guild: guild
+        },
+        {
+            roleType: UserRoleType.GuildManagement,
+            server: server,
+            guild: guild
+        }
+    ] } });
+
+    // find channels
+    const recruitChannel = await databaseHelper.getGameChannel(guild, ChannelPurposeType.Recruitment);
+    if (!recruitChannel) {
+        throw new Error('Recruitment channel is not set up correctly');
+    }
+    const applicantChannel = await databaseHelper.getGameChannel(guild, ChannelPurposeType.Applicant);
+    if (!applicantChannel) {
+        throw new Error('Applicant channel is not set up correctly');
+    }
+
+    // get discord channels
+    const discordServer = interaction.guild!;
+    const discordRecruitChannel = await discordServer.channels.fetch(recruitChannel.discordId);
+    if (!discordRecruitChannel || discordRecruitChannel.type !== ChannelType.GuildText) {
+        throw new Error('Recruitment channel is not set up correctly');
+    }
+    const discordApplicantChannel = await discordServer.channels.fetch(applicantChannel.discordId);
+    if (!discordApplicantChannel || discordApplicantChannel.type !== ChannelType.GuildText) {
+        throw new Error('Applicant channel is not set up correctly');
+    }
+
+    // get thread
+    const recruitThread = await getChannelThread(discordRecruitChannel, caller);
+    const applicantThread = await getChannelThread(discordApplicantChannel, caller);
+
+    // apply to guild
+    await prisma.guildApplicant.upsert({
+        create: {
+            userId: caller.id,
+            guildId: guild.id,
+            gameId: gameId,
+            serverId: server.id
+        },
+        where: {
+            userId_gameId_serverId: {
+                userId: caller.id,
+                gameId: gameId,
+                serverId: server.id
+            }
+        },
+        update: {
+            guildId: guild.id
+        }
+    });
+
+    // send messages
+    const recruitChannelMessage = `<@${caller.discordId}> just applied for a guild. <#${recruitThread.id}> is their private application chat.`;
+    const recruitThreadMessage = `${caller.name} just applied ${guild.guildId === '' ? '!' : `for ${guild.name}!`}'}\nAdding ${managementRoles.map(role => `<@&${role.discordId}>`).join(', ')} to the thread.`;
+    const applicantThreadMessage = `Hi <@${caller.discordId}>!\nThank you for applying! You can talk about your application in this thread.`;
+    await discordRecruitChannel.send(recruitChannelMessage);
+    await recruitThread.send(recruitThreadMessage);
+    await applicantThread.send(applicantThreadMessage);
+
+    console.log(`${caller.name} applied to ${guildId}`);
+    await interaction.editReply(`You have successfully applied`);
     return true;
 }
 export = appActionCommands;
-

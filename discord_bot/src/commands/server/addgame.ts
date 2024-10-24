@@ -1,13 +1,15 @@
-import { AutocompleteInteraction, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import { AutocompleteInteraction, ChannelType, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { CommandInterface, GetCommandInfo } from "../../CommandInterface";
 import { Prisma } from "@prisma/client";
-import { UserRoleType } from "../../DatabaseHelper";
+import { ChannelPurposeType, UserRoleType } from "../../DatabaseHelper";
 
 const options = {
     game: 'game',
     leadrole: 'leadrole',
     managementrole: 'managementrole',
-    memberrole: 'memberrole'
+    memberrole: 'memberrole',
+    recruitThread: 'recruitthread',
+    applicantThread: 'applicantthread'
 }
 
 const addgameCommand: CommandInterface = {
@@ -23,14 +25,27 @@ const addgameCommand: CommandInterface = {
         .addRoleOption(option =>
             option.setName(options.leadrole)
             .setDescription('shared role for all guild leads for the game')
+            .setRequired(true)
         )
         .addRoleOption(option =>
             option.setName(options.managementrole)
             .setDescription('shared role for all guild management for the game')
+            .setRequired(true)
         )
         .addRoleOption(option =>
             option.setName(options.memberrole)
             .setDescription('shared role for all guild members for the game')
+            .setRequired(true)
+        )
+        .addChannelOption(option =>
+            option.setName(options.recruitThread)
+            .setDescription('thread channel to send applications for review')
+            .setRequired(true)
+        )
+        .addChannelOption(option =>
+            option.setName(options.applicantThread)
+            .setDescription('thread channel for applicants to fill out applications in')
+            .setRequired(true)
         ),
     
     async execute(interaction: ChatInputCommandInteraction) {
@@ -42,9 +57,11 @@ const addgameCommand: CommandInterface = {
         const serverInfo = interaction.guild;
 
         const gameId = interaction.options.getInteger(options.game)!;
-        const leadRoleInfo = interaction.options.getRole(options.leadrole);
-        const managementRoleInfo = interaction.options.getRole(options.managementrole);
-        const memberRoleInfo = interaction.options.getRole(options.memberrole);
+        const leadRoleInfo = interaction.options.getRole(options.leadrole)!;
+        const managementRoleInfo = interaction.options.getRole(options.managementrole)!;
+        const memberRoleInfo = interaction.options.getRole(options.memberrole)!;
+        const recruitChannelInfo = interaction.options.getChannel(options.recruitThread)!;
+        const applicantChannelInfo = interaction.options.getChannel(options.applicantThread)!;
         let errorMessage = 'There was an issue adding support for the game.\n';
         try {
             const { prisma, caller, databaseHelper } = await GetCommandInfo(interaction.user);
@@ -62,44 +79,56 @@ const addgameCommand: CommandInterface = {
                 return;
             }
 
-            const gamePlaceholderGuild = await databaseHelper.createPlaceholderGuild(gameId, server.id);
+            const gameGuild = await databaseHelper.createGameGuild(gameId, server.id);
 
-            let message = `Game '${gamePlaceholderGuild.game.name}' is added to the server '${server.name}'\n`;
-            if (leadRoleInfo) {
-                try {
-                    const leadRole = await databaseHelper.createGuildRole(gamePlaceholderGuild, UserRoleType.GuildLead, leadRoleInfo);
-                    message += `- Lead role: <@&${leadRole.discordId}>\n`;
-                }
-                catch (error) {
-                    errorMessage += `- Could not add lead role. Has this role already been used?\n`;
-                    throw error;
-                }
+            let message = `Game '${gameGuild.game.name}' is added to the server '${server.name}'\n`;
+            try {
+                const leadRole = await databaseHelper.createGuildRole(gameGuild, UserRoleType.GuildLead, leadRoleInfo);
+                message += `- Lead role: <@&${leadRole.discordId}>\n`;
             }
-            if (managementRoleInfo) {
-                try {
-                    const managementRole = await databaseHelper.createGuildRole(gamePlaceholderGuild, UserRoleType.GuildManagement, managementRoleInfo);
-                    message += `- Management role: <@&${managementRole.discordId}>\n`;
-                }
-                catch (error) {
-                    errorMessage += `- Could not add management role. Has this role already been used?\n`;
-                    throw error;
-                }
+            catch (error) {
+                errorMessage += `- Could not add lead role. Has this role already been used?\n`;
+                throw error;
             }
-            if (memberRoleInfo) {
-                try {
-                    const memberRole = await databaseHelper.createGuildRole(gamePlaceholderGuild, UserRoleType.GuildMember, memberRoleInfo);
-                    message += `- Member role: <@&${memberRole.discordId}>\n`;
-                }
-                catch (error) {
-                    errorMessage += `- Could not add member role. Has this role already been used?\n`;
-                    throw error;
-                }
+            try {
+                const managementRole = await databaseHelper.createGuildRole(gameGuild, UserRoleType.GuildManagement, managementRoleInfo);
+                message += `- Management role: <@&${managementRole.discordId}>\n`;
+            }
+            catch (error) {
+                errorMessage += `- Could not add management role. Has this role already been used?\n`;
+                throw error;
+            }
+            try {
+                const memberRole = await databaseHelper.createGuildRole(gameGuild, UserRoleType.GuildMember, memberRoleInfo);
+                message += `- Member role: <@&${memberRole.discordId}>\n`;
+            }
+            catch (error) {
+                errorMessage += `- Could not add member role. Has this role already been used?\n`;
+                throw error;
+            }
+
+            if (recruitChannelInfo.type !== ChannelType.GuildText) {
+                errorMessage += `- Could not add recruitment channel. It needs to be a text channel.\n`;
+                throw new Error(errorMessage);
+            }
+            else {
+                const recruitThread = await databaseHelper.creatGameChannel(gameGuild, ChannelPurposeType.Recruitment, recruitChannelInfo.id);
+                message += `- Recruitment thread: <#${recruitThread!.discordId}>\n`;
+            }
+
+            if (applicantChannelInfo.type !== ChannelType.GuildText) {
+                errorMessage += `- Could not add applicant channel. It needs to be a text channel.\n`;
+                throw new Error(errorMessage);
+            }
+            else {
+                const applicantChannel = await databaseHelper.creatGameChannel(gameGuild, ChannelPurposeType.Applicant, applicantChannelInfo.id);
+                message += `- Applicant thread: <#${applicantChannel!.discordId}>\n`;
             }
             
             console.log(message);
             message += `You can now call /createguild to add guilds for this game.\n`
             await interaction.editReply(message);
-            databaseHelper.writeToLogChannel(interaction.guild, server.id, message);
+            await databaseHelper.writeToLogChannel(interaction.guild, server.id, message);
         }
         catch (error) {
             console.error(error);
