@@ -443,16 +443,35 @@ const applyAction = async function(
         }
     });
 
+    // get guild application
+    const applicationText = await prisma.guildApplication.findUnique({ where: {
+        serverId_gameId: {
+            serverId: server.id,
+            gameId: gameId
+        }
+    }});
+
     // send messages
     const recruitChannelMessage = `<@${caller.discordId}> just applied for a guild. <#${recruitThread.id}> is their private application chat.`;
-    const recruitThreadMessage = `${caller.name} just applied for ${guild.name}!\nAdding ${managementRoles.map(role => `<@&${role.discordId}>`).join(', ')} to the thread.`;
-    const applicantThreadMessage = `Hi <@${caller.discordId}>!\nThank you for applying! You can talk about your application in this thread.`;
     await discordRecruitChannel.send(recruitChannelMessage);
+    
+    let recruitThreadMessage = `${caller.name} just applied for ${guild.name}!\nAdding ${managementRoles.map(role => `<@&${role.discordId}>`).join(', ')} to the thread.\n`;
+    if (applicationText) {
+        recruitThreadMessage += `\nHere is the app sent to the applicant:\n\`\`\`${applicationText.text}\`\`\``;
+    }
     await recruitThread.send(recruitThreadMessage);
+
+    let applicantThreadMessage = `Hi <@${caller.discordId}>!\nThank you for applying!\n`;
+    if (applicationText) {
+        applicantThreadMessage += `\n**Can you fill out the application below?**\n\`\`\`${applicationText.text}\`\`\``;
+    }
+    else {
+        applicantThreadMessage += `We will reach out here to talk about your application.`;
+    }
     await applicantThread.send(applicantThreadMessage);
 
-    console.log(`${caller.name} applied to ${guildId}`);
-    await interaction.editReply(`You have successfully applied`);
+    console.log(`${caller.name} applied to ${guild.name}`);
+    await interaction.editReply(`You have successfully applied. Go to <#${applicantThread.id}> to go through your application.`);
     return true;
 }
 export = appActionCommands;
