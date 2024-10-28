@@ -15,6 +15,7 @@ A bot to create their community structure straight within Discord.
    - Add shared roles to more easily mention the whole group of people
    - Add channels where we can spawn threads to handle application process
 4. Run ```/createguild``` for each guild
+5. **(Recommended)** Run ```/setupapp``` to set up the application you want for the game
 
 ### User Management (can be ran by server owner + admins + guild management)
 1. Add server admin/guild lead/guild management role to the right people to give them permission to run respective commands

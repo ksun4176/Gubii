@@ -126,7 +126,7 @@ const addgameCommand: CommandInterface = {
             }
             
             console.log(message);
-            message += `You can now call /createguild to add guilds for this game.\n`
+            message += `You can now call /createguild to add guilds for this game.\n **(Recommended)** You can also call /setupapp to set up the application for the game`
             await interaction.editReply(message);
             await databaseHelper.writeToLogChannel(interaction.guild, server.id, message);
         }
