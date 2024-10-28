@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { AnyThreadChannel, ChannelType, Client, ClientEvents, Message, PartialMessage, TextChannel, ThreadAutoArchiveDuration } from "discord.js";
+import { AnyThreadChannel, BaseInteraction, Channel, ChannelType, Client, ClientEvents, Guild, Message, PartialMessage, TextChannel, ThreadAutoArchiveDuration } from "discord.js";
 import { CommandInterface } from "./CommandInterface";
 import { EventInterface } from "./EventInterface";
 import { PrismaClient, User } from "@prisma/client";
@@ -101,27 +101,53 @@ export const getChannelThread = async (channel: TextChannel, user: User) => {
 /**
  * Look up information about a message that is going between a recruiter and a guild applicant.
  * This will return null if the message is deemed not to be a guild application message.
- * This will throw errors if guild application isn't set up correctly.
+ * See getGuildApplyChannelInfo for more information.
  * @param prisma Prisma client to look up database info
  * @param databaseHelper Helper class for database handling
  * @param message message to look for information about
+ * @returns See getGuildApplyChannelInfo
+ */
+export const getGuildApplyMessageInfo = async (prisma: PrismaClient, databaseHelper: DatabaseHelper, message: Message | PartialMessage) => {
+    if (!message.inGuild() || message.author.bot) {
+        return null;
+    }
+    return await getGuildApplyChannelInfo(prisma, databaseHelper, message);
+}
+
+/**
+ * Look up information about an interaction that happened in a recruitment/applicant thread.
+ * See getGuildApplyChannelInfo for more information.
+ * @param prisma Prisma client to look up database info
+ * @param databaseHelper Helper class for database handling
+ * @param message message to look for information about
+ * @returns See getGuildApplyChannelInfo
+ */
+export const getGuildApplyInteractionInfo = async (prisma: PrismaClient, databaseHelper: DatabaseHelper, interaction: BaseInteraction) => {
+    if (!interaction.guild) {
+        return null;
+    }
+    return await getGuildApplyChannelInfo(prisma, databaseHelper, interaction);
+}
+
+/**
+ * Look up information that is going between a recruiter and a guild applicant.
+ * This will throw errors if guild application isn't set up correctly.
+ * @param prisma Prisma client to look up database info
+ * @param databaseHelper Helper class for database handling
+ * @param data discord server and channel information
  * @returns 
  *  - application: the GuildApplicant object
  *  - sourceChannel: the ChannelPurpose object for where the message is coming from
  *  - targetChannel: the ChannelPurpose object for where the message should be forwarded to
  *  - targetThread: the actual thread under the targetChannel that we should forward the message to 
  */
-export const getGuildApplyMessageInfo = async (prisma: PrismaClient, databaseHelper: DatabaseHelper, message: Message | PartialMessage) => {
-    if (!message.inGuild() || message.author.bot) {
+const getGuildApplyChannelInfo = async (prisma: PrismaClient, databaseHelper: DatabaseHelper, data: { channel: Channel | null, guild: Guild | null }) => {
+    // only handling messages from threads: Recruitment + Applicant
+    if (!data.channel || !data.channel.isThread() || !data.guild) {
         return null;
     }
-
-    // only handling messages from threads: Recruitment + Applicant threads
-    if (!message.channel.isThread()) {
-        return null;
-    }
-    const threadParentId = message.channel.parentId;
-    const threadName = message.channel.name;
+    const threadParentId = data.channel.parentId;
+    const threadName = data.channel.name;
     const applicantId = threadName.slice(threadName.indexOf('|')+1);
     if (!threadParentId || !applicantId) {
         return null;
@@ -151,7 +177,7 @@ export const getGuildApplyMessageInfo = async (prisma: PrismaClient, databaseHel
     if (!user) {
         throw new Error('Applicant not found');
     }
-    const application = await prisma.guildApplicant.findUniqueOrThrow({ 
+    const application = await prisma.guildApplicant.findUnique({ 
         where: {
             userId_gameId_serverId: {
                 userId: user.id,
@@ -169,7 +195,7 @@ export const getGuildApplyMessageInfo = async (prisma: PrismaClient, databaseHel
     if (!targetChannel) {
         throw new Error('Target channel not found');
     }
-    const discordTargetChannel = await message.guild.channels.fetch(targetChannel.discordId);
+    const discordTargetChannel = await data.guild.channels.fetch(targetChannel.discordId);
     if (!discordTargetChannel || discordTargetChannel.type !== ChannelType.GuildText) {
         throw new Error('Target channel not set up correctly');
     }
@@ -178,6 +204,7 @@ export const getGuildApplyMessageInfo = async (prisma: PrismaClient, databaseHel
         application: application,
         sourceChannel: sourceChannel,
         targetChannel: targetChannel,
+        discordTargetChannel: discordTargetChannel,
         targetThread: targetThread
     };
 }

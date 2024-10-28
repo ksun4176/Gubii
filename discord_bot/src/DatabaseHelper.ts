@@ -105,23 +105,23 @@ export class DatabaseHelper {
      * @returns The created guild
      */
     public async createGameGuild(gameId: number, serverId: number) {
+        const game = await this.__prisma.game.findUniqueOrThrow({ where: {id: gameId } });
         return await this.__prisma.guild.upsert({
             create: {
-                name: `GameGuildPlaceholder${gameId}`,
+                name: game.name,
                 serverId: serverId,
-                gameId: gameId,
+                gameId: game.id,
                 guildId: ''
             },
             where: {
                 gameId_guildId_serverId: {
                     serverId: serverId,
-                    gameId: gameId,
+                    gameId: game.id,
                     guildId: ''
                 }
             },
             update: {
                 active: true,
-                name: `GameGuildPlaceholder${gameId}`
             },
             include: {
                 game: true

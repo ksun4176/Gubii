@@ -20,12 +20,15 @@ A bot to create their community structure straight within Discord.
 1. Add server admin/guild lead/guild management role to the right people to give them permission to run respective commands
 2. Anyone: Run ```/application apply``` to apply for any guild
    - (Optional) Specify a guild to apply to directly
-3. To handle an application, you can:
+3. **Application threads will be spawned in specified channels**
+   - Recruiters and applicants can now talk to each other from their respective views.
+   - **NOTE**: Recruiter messages will only send if prefixed with '\\'. OTHERWISE IT WILL NOT SEND TO THE APPLICANT. This is so management can talk amongst themselves in the same thread.
+4. To handle an application, you can:
    - Run ```/application accept``` to accept a user into a guild
    - Admin: Run ```/application decline``` to decline user from ALL guilds
-4. Run ```/application accept``` to transfer user to new guild
+5. Run ```/application accept``` to transfer user to new guild
    - You will then be prompted to remove old guild roles which is equivalent to a transfer
-5. Run ```/kickguild``` to kick a user from guilds
+6. Run ```/kickguild``` to kick a user from guilds
    - (Optional) Specify a single guild to kick the user from
 
 **<u>NOTES:</u>**

@@ -187,7 +187,7 @@ const kickGuildCommand: CommandInterface = {
                         where: {
                             server: server,
                             gameId: gameId,
-                            guildId: { not: '' },
+                            guildId: { not: '' }, // not shared guild
                             active: true   
                         }
                     });

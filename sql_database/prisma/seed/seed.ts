@@ -69,16 +69,17 @@ const main = async () => {
                 serverId: server.id,
                 discordId: `server${server.id}admin`
             }]);
+            const gameIndex = Math.floor(Math.random() * games.length + 1);
             // Seed placeholder guilds
             await seed.guild([{
-                gameId: Math.floor(Math.random() * games.length + 1),
+                gameId: gameIndex,
                 guildId: '', 
-                name: 'GameGuildPlaceholder1', 
+                name: games[gameIndex], 
                 serverId: server.id
             }]);
             // Seed test guilds
             await seed.guild((x) => x({min: 1, max: 3}, (ctx) => ({
-                gameId: Math.floor(Math.random() * games.length + 1),
+                gameId: gameIndex,
                 guildId: `${server.id}${ctx.index+1}`,
                 name: `${server.id} Gubii Test Guild ${ctx.index+1}`, 
                 serverId: server.id
