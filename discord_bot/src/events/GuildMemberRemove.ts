@@ -1,12 +1,13 @@
 import { Events, GuildMember, PartialGuildMember } from "discord.js";
 import { EventInterface, GetEventInfo } from "../EventInterface";
 
-const guildMemberUpdateEvent: EventInterface<Events.GuildMemberRemove> = {
+const guildMemberRemoveEvent: EventInterface<Events.GuildMemberRemove> = {
     name: Events.GuildMemberRemove,
 	async execute(member: GuildMember | PartialGuildMember) {
         try {
-            const { prisma } = await GetEventInfo();
+            const { prisma, databaseHelper } = await GetEventInfo();
             const server = await prisma.server.findUniqueOrThrow({ where: { discordId: member.guild.id } });
+            const user = await databaseHelper.getUser(member.user);
             const roles = await prisma.userRole.findMany({ where: { server: server } });
             const rolesToRemove: string[] = [];
             for (const role of roles) {
@@ -16,7 +17,7 @@ const guildMemberUpdateEvent: EventInterface<Events.GuildMemberRemove> = {
             };
             if (rolesToRemove.length > 0) {
                 member.roles.remove(rolesToRemove);
-                console.log(`User ${member.user.username} left the server so we removed these roles: ${rolesToRemove}`);
+                console.log(`User ${user.name} left the server so we removed these roles: ${rolesToRemove}`);
             }
         }
         catch (error) {
@@ -24,4 +25,4 @@ const guildMemberUpdateEvent: EventInterface<Events.GuildMemberRemove> = {
         }
     }
 }
-export = guildMemberUpdateEvent;
+export = guildMemberRemoveEvent;

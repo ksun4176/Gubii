@@ -176,7 +176,7 @@ const acceptAction = async function(
             interaction.editReply(`You need to specify the user.`)
             return false;
         }
-        user = await prisma.user.findUniqueOrThrow({ where: {discordId: userInfo.id } });
+        user = await databaseHelper.getUser(userInfo);
     }
     
     const guild = await prisma.guild.findUniqueOrThrow({ where: { id: guildId } });

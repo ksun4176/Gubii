@@ -1,5 +1,5 @@
 import { Guild, Prisma, PrismaClient } from "@prisma/client";
-import { APIRole, Guild as DiscordServer, GuildMember, Role } from "discord.js";
+import { APIRole, Guild as DiscordServer, GuildMember, Role, User as DiscordUser } from "discord.js";
 
 export enum ChannelPurposeType {
     Recruitment = 1,
@@ -238,6 +238,28 @@ export class DatabaseHelper {
     //#endregion Guild Helpers
 
     //#region User Helpers
+    /**
+     * Find or create a user
+     * @param discordId Linked discord user
+     * @param name name of user to save if creating
+     * @returns found or created user
+     */
+    public async getUser(discordUser: DiscordUser) {
+        const user = await this.__prisma.user.upsert({
+            create: {
+                name: discordUser.globalName ?? discordUser.username,
+                discordId: discordUser.id
+            },
+            where: {
+                discordId: discordUser.id
+            },
+            update: {
+                name: discordUser.globalName ?? discordUser.username
+            }
+        });
+        return user;
+    }
+    
     /**
      * Check if a user has ANY of the roles asked for.
      * This will determine if they have permission to do said action.

@@ -27,6 +27,7 @@ const updateSharedRoles = async (member: GuildMember) => {
             
     // get server + guild roles
     const server = await prisma.server.findUniqueOrThrow({ where: { discordId: member.guild.id } });
+    const user = await databaseHelper.getUser(member.user);
     const gameGuilds = await databaseHelper.getGameGuilds(server.id);
     const guildRoles = await prisma.userRole.findMany({
         where: { OR: [
@@ -104,7 +105,7 @@ const updateSharedRoles = async (member: GuildMember) => {
     }
     if (rolesToAdd.length > 0) {
         member.roles.add(rolesToAdd);
-        console.log(`User ${member.user.username} added these roles: ${rolesToAdd}`);
+        console.log(`User ${user.name} added these roles: ${rolesToAdd}`);
     }
     const rolesToRemove: string[] = [];
     for (let roleId of currentSharedRoles) {
@@ -114,7 +115,7 @@ const updateSharedRoles = async (member: GuildMember) => {
     }
     if (rolesToRemove.length > 0) {
         member.roles.remove(rolesToRemove);
-        console.log(`User ${member.user.username} removed these roles: ${rolesToRemove}`);
+        console.log(`User ${user.name} removed these roles: ${rolesToRemove}`);
     }
 }
 

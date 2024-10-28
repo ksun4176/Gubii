@@ -79,7 +79,7 @@ const kickGuildCommand: CommandInterface = {
                     const { prisma, caller, databaseHelper } = await GetCommandInfo(interaction.user);
         
                     const server = await prisma.server.findUniqueOrThrow({ where: { discordId: serverInfo.id } });
-                    const user = await prisma.user.findUniqueOrThrow({ where: {discordId: userInfo.id } });
+                    const user = await databaseHelper.getUser(userInfo);
         
                     const discordCaller = await interaction.guild.members.fetch(caller.discordId!);
                     const discordUser = await interaction.guild.members.fetch(user.discordId!);

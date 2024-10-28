@@ -21,20 +21,8 @@ export interface CommandInterface {
  */
 export async function GetCommandInfo(callerInfo: User) {
     const prisma = new PrismaClient();
-    let caller = await prisma.user.findUnique({
-        where: {
-            discordId: callerInfo.id
-        }
-    });
-    if (!caller) {
-        caller = await prisma.user.create({
-            data: {
-                name: callerInfo.username,
-                discordId: callerInfo.id
-            }
-        })
-    }
     const helper = new DatabaseHelper(prisma);
+    const caller = await helper.getUser(callerInfo);
     return {
         prisma: prisma, 
         caller: caller,
