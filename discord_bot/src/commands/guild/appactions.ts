@@ -218,6 +218,9 @@ const acceptAction = async function(
     let message = `'${user.name}' was accepted into '${guild.name}'\n`;
     console.log(message);
     await interaction.editReply(message);
+    if (interactionInfo && interaction.channel!.isThread()) {
+        await interaction.channel.setArchived(true);
+    }
     if (targetThread) {
         await targetThread.send(`You have been accepted to ${guild.name}!`);
     }
@@ -338,9 +341,12 @@ const declineAction = async function(
     }
     await prisma.guildApplicant.delete({ where: { id: application.id } });
 
-    const message = `${application.user.name}'s application for ${sourceChannel.guild!.name} was declined.`;
+    const message = `'${application.user.name}' was declined for '${sourceChannel.guild!.name}'`;
     console.log(message);
     await interaction.editReply(message);
+    if (interactionInfo && interaction.channel!.isThread()) {
+        await interaction.channel.setArchived(true);
+    }
     await targetThread.send('This application was declined. Feel free to apply again in the future.');
     await databaseHelper.writeToLogChannel(discordServer, server.id, message);
     return true;

@@ -4,20 +4,16 @@ A bot to create their community structure straight within Discord.
 ## How to Use
 ### Set up Server and Guilds (can be ran by server owner + admins)
 1. Server owner: Add bot to server
-   - Go to https://discord.com/oauth2/authorize?client_id=1246175342918635530&permissions=395405552704&integration_type=0&scope=bot
+   - Go to https://discord.com/oauth2/authorize?client_id=1246175342918635530&permissions=8&integration_type=0&scope=bot
    - Select your server
    - Press Authorize
 2. Server owner: Run ```/setupserver```
    - (Optional) Add server admin role to give other users permission to manage the server
    - (Optional) Add bot log channel to log everything the bot does in your server.
-      
-     **<u>Recommended</u>: Make this private but give bot permission to access**
 3. Run ```/addgame``` to let us know what games you are playing
    - If you do not see the game you're playing, contact me to add it in
    - Add shared roles to more easily mention the whole group of people
    - Add channels where we can spawn threads to handle application process
-
-     **<u>Recommended</u>: Make these private but give bot permission to access**
 4. Run ```/createguild``` for each guild
 
 ### User Management (can be ran by server owner + admins + guild management)
