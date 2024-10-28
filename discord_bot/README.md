@@ -8,21 +8,25 @@ A bot to create their community structure straight within Discord.
    - Select your server
    - Press Authorize
 2. Server owner: Run ```/setupserver```
-   - (Optional) Add server admin role so give other users permission to manage the server
-   - (Optional) Add bot log channel to log everything the bot does in your server
+   - (Optional) Add server admin role to give other users permission to manage the server
+   - (Optional) Add bot log channel to log everything the bot does in your server.
+      
+     **<u>Recommended</u>: Make this private but give bot permission to access**
 3. Run ```/addgame``` to let us know what games you are playing
-   - Add a shared guild lead/management/member role to more easily mention the whole group of people
+   - If you do not see the game you're playing, contact me to add it in
+   - Add shared roles to more easily mention the whole group of people
    - Add channels where we can spawn threads to handle application process
+
+     **<u>Recommended</u>: Make these private but give bot permission to access**
 4. Run ```/createguild``` for each guild
-   - Add guild specific lead/management/member role
 
 ### User Management (can be ran by server owner + admins + guild management)
 1. Add server admin/guild lead/guild management role to the right people to give them permission to run respective commands
 2. Anyone: Run ```/application apply``` to apply for any guild
    - (Optional) Specify a guild to apply to directly
 3. **Application threads will be spawned in specified channels**
-   - Recruiters and applicants can now talk to each other from their respective views.
-   - **NOTE**: Recruiter messages will only send if prefixed with '\\'. OTHERWISE IT WILL NOT SEND TO THE APPLICANT. This is so management can talk amongst themselves in the same thread.
+   - Messages will be automatically reacted with ✅ or ❌ to let you know if they were successful
+   - **<u>NOTE</u>**: Recruiter messages will only send if prefixed with '\\'. This is so management can talk amongst themselves in the same thread.
 4. To handle an application, you can:
    - Run ```/application accept``` to accept a user into a guild
    - Admin: Run ```/application decline``` to decline user from ALL guilds
@@ -31,8 +35,8 @@ A bot to create their community structure straight within Discord.
 6. Run ```/kickguild``` to kick a user from guilds
    - (Optional) Specify a single guild to kick the user from
 
-**<u>NOTES:</u>**
-1. It is ok for a user to be in multiple guilds
+## FAQs
+
 
 ## File Structure
 All development files can be found in `src/`. All other folders are auto generated so they do not need to be touched.

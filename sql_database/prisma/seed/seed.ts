@@ -33,7 +33,8 @@ const main = async () => {
     await seed.userRoleType(userRoleTypes.map((type, index) => { return { id: index+1, name: type } }));
     // Seed games
     const games = [
-        'AFK Arena'
+        'AFK Arena',
+        'AFK Journey'
     ]
     await seed.game(games.map((game, index) => { return { id: index+1, name: game } }));
 
