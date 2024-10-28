@@ -1,9 +1,10 @@
 import fs from "fs";
 import path from "path";
-import { AnyThreadChannel, ChannelType, Client, ClientEvents, TextChannel, ThreadAutoArchiveDuration } from "discord.js";
+import { AnyThreadChannel, ChannelType, Client, ClientEvents, Message, PartialMessage, TextChannel, ThreadAutoArchiveDuration } from "discord.js";
 import { CommandInterface } from "./CommandInterface";
 import { EventInterface } from "./EventInterface";
-import { User } from "@prisma/client";
+import { PrismaClient, User } from "@prisma/client";
+import { ChannelPurposeType, DatabaseHelper } from "./DatabaseHelper";
 
 /**
  * Find all commands and execute a callback on them
@@ -90,9 +91,93 @@ export const getChannelThread = async (channel: TextChannel, user: User) => {
     if (!thread) {
         thread = await channel.threads.create({
             name: `${user.name.replace('|','')}|${user.discordId}`,
-            autoArchiveDuration: ThreadAutoArchiveDuration.ThreeDays,
+            autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
             type: ChannelType.PrivateThread
         });
     }
     return thread;
+}
+
+/**
+ * Look up information about a message that is going between a recruiter and a guild applicant.
+ * This will return null if the message is deemed not to be a guild application message.
+ * This will throw errors if guild application isn't set up correctly.
+ * @param prisma Prisma client to look up database info
+ * @param databaseHelper Helper class for database handling
+ * @param message message to look for information about
+ * @returns 
+ *  - application: the GuildApplicant object
+ *  - sourceChannel: the ChannelPurpose object for where the message is coming from
+ *  - targetChannel: the ChannelPurpose object for where the message should be forwarded to
+ *  - targetThread: the actual thread under the targetChannel that we should forward the message to 
+ */
+export const getGuildApplyMessageInfo = async (prisma: PrismaClient, databaseHelper: DatabaseHelper, message: Message | PartialMessage) => {
+    if (!message.inGuild() || message.author.bot) {
+        return null;
+    }
+
+    // only handling messages from threads: Recruitment + Applicant threads
+    if (!message.channel.isThread()) {
+        return null;
+    }
+    const threadParentId = message.channel.parentId;
+    const threadName = message.channel.name;
+    const applicantId = threadName.slice(threadName.indexOf('|')+1);
+    if (!threadParentId || !applicantId) {
+        return null;
+    }
+
+
+    // check if is recruitment/applicant channel and then get counterpart
+    const sourceChannel = await prisma.channelPurpose.findFirst({
+        where: { OR: [
+            {
+                discordId: threadParentId,
+                channelType: ChannelPurposeType.Applicant
+            },
+            {
+                discordId: threadParentId,
+                channelType: ChannelPurposeType.Recruitment
+            }
+        ] },
+        include: { guild: true }
+    });
+    if (!sourceChannel) {
+        return null;
+    }
+    
+    // find applicant
+    const user = await prisma.user.findUnique({ where: { discordId: applicantId } });
+    if (!user) {
+        throw new Error('Applicant not found');
+    }
+    const application = await prisma.guildApplicant.findUniqueOrThrow({ 
+        where: {
+            userId_gameId_serverId: {
+                userId: user.id,
+                gameId: sourceChannel.guild!.gameId,
+                serverId: sourceChannel.serverId
+            }
+        },
+        include: { user: true }
+    });
+
+    const targetChannel = await databaseHelper.getGameChannel(
+        sourceChannel.guild!, 
+        sourceChannel.channelType === ChannelPurposeType.Applicant ? ChannelPurposeType.Recruitment : ChannelPurposeType.Applicant
+    );
+    if (!targetChannel) {
+        throw new Error('Target channel not found');
+    }
+    const discordTargetChannel = await message.guild.channels.fetch(targetChannel.discordId);
+    if (!discordTargetChannel || discordTargetChannel.type !== ChannelType.GuildText) {
+        throw new Error('Target channel not set up correctly');
+    }
+    const targetThread = await getChannelThread(discordTargetChannel, user);
+    return {
+        application: application,
+        sourceChannel: sourceChannel,
+        targetChannel: targetChannel,
+        targetThread: targetThread
+    };
 }

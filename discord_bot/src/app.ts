@@ -23,7 +23,8 @@ const client: Client = new Client({
         IntentsBitField.Flags.MessageContent
     ],
     partials: [
-        Partials.GuildMember
+        Partials.GuildMember,
+        Partials.Message
     ]
 });
 
