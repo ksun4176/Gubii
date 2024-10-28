@@ -1,8 +1,8 @@
-import { ActionRowBuilder, AutocompleteInteraction, BaseGuildTextChannel, ButtonBuilder, ButtonStyle, ChannelType, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import { ActionRowBuilder, AnyThreadChannel, AutocompleteInteraction, BaseGuildTextChannel, ButtonBuilder, ButtonStyle, ChannelType, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { CommandInterface, GetCommandInfo } from "../../CommandInterface";
 import { Guild, Prisma, PrismaClient, Server, User } from "@prisma/client";
 import { ChannelPurposeType, DatabaseHelper, UserRoleType } from "../../DatabaseHelper";
-import { getChannelThread } from "../../DiscordHelper";
+import { getChannelThread, getGuildApplyInteractionInfo } from "../../DiscordHelper";
 
 const subcommands = {
     accept: 'accept',
@@ -44,24 +44,12 @@ const appActionCommands: CommandInterface = {
                 .addUserOption(option =>
                     option.setName(options.user)
                         .setDescription('user to accept')
-                        .setRequired(true)
                 )
         )
         .addSubcommand(subcommand =>
             subcommand
                 .setName(subcommands.decline)
                 .setDescription('decline an application')
-                .addIntegerOption(option =>
-                    option.setName(options.game)
-                        .setDescription('game application is for')
-                        .setRequired(true)
-                        .setAutocomplete(true)
-                )
-                .addUserOption(option =>
-                    option.setName(options.user)
-                        .setDescription('user to decline')
-                        .setRequired(true)
-                )
         )
         .addSubcommand(subcommand =>
             subcommand
@@ -87,19 +75,18 @@ const appActionCommands: CommandInterface = {
         }
         await interaction.deferReply();
         const subcommand = interaction.options.getSubcommand();
-        const gameId = interaction.options.getInteger(options.game)!;
         try {
             const { prisma, caller, databaseHelper } = await GetCommandInfo(interaction.user);
             const server = await prisma.server.findUniqueOrThrow({ where: { discordId: interaction.guild.id } });
             switch (subcommand) {
                 case subcommands.accept:
-                    await acceptAction(interaction, server, gameId, prisma, caller, databaseHelper);
+                    await acceptAction(interaction, server, prisma, caller, databaseHelper);
                     break;
                 case subcommands.decline:
-                    await declineAction(interaction, server, gameId, prisma, caller, databaseHelper);
+                    await declineAction(interaction, server, prisma, caller, databaseHelper);
                     break;
                 case subcommands.apply:
-                    await applyAction(interaction, server, gameId, prisma, caller, databaseHelper);
+                    await applyAction(interaction, server, prisma, caller, databaseHelper);
                     break;
                 default:
                     await interaction.editReply('No action done');
@@ -125,7 +112,11 @@ const appActionCommands: CommandInterface = {
             
             switch (focusedOption.name) {
                 case options.game:
-                    const gameGuilds = await databaseHelper.getGameGuilds(server.id);
+                    let gameGuilds = await databaseHelper.getGameGuilds(server.id);
+                    const interactionInfo = await getGuildApplyInteractionInfo(prisma, databaseHelper, interaction);
+                    if (interactionInfo?.sourceChannel.channelType === ChannelPurposeType.Recruitment) {
+                        gameGuilds = gameGuilds.filter((guild) => guild.game.id === interactionInfo.sourceChannel.guild!.gameId);
+                    }
                     await interaction.respond(
                         gameGuilds.map(guild => ({ name: guild.game.name, value: guild.game.id }))
                     );
@@ -136,7 +127,7 @@ const appActionCommands: CommandInterface = {
                         where: {
                             server: server,
                             gameId: gameId,
-                            guildId: { not: '' },
+                            guildId: { not: '' }, // not shared guild
                             active: true   
                         }
                     });
@@ -157,7 +148,6 @@ const appActionCommands: CommandInterface = {
  * This will also be used to transfer user between guilds.
  * @param interaction The discord interaction
  * @param server The server application is in
- * @param gameId game application is for
  * @param prisma Prisma Client
  * @param caller The user who called this interaction
  * @param databaseHelper database helper
@@ -166,15 +156,29 @@ const appActionCommands: CommandInterface = {
 const acceptAction = async function(
     interaction: ChatInputCommandInteraction,
     server: Server,
-    gameId: number,
     prisma: PrismaClient,
     caller: User,
     databaseHelper: DatabaseHelper
 ): Promise<boolean> {
-    const userInfo = interaction.options.getUser(options.user)!;
+    const gameId = interaction.options.getInteger(options.game)!;
     const guildId = interaction.options.getInteger(options.guild)!;
 
-    const user = await prisma.user.findUniqueOrThrow({ where: {discordId: userInfo.id } });
+    let user: User;
+    let targetThread: AnyThreadChannel | null = null;
+    const interactionInfo = await getGuildApplyInteractionInfo(prisma, databaseHelper, interaction);
+    if (interactionInfo?.application) {
+        user = interactionInfo.application.user;
+        targetThread = interactionInfo.targetThread;
+    }
+    else {
+        const userInfo = interaction.options.getUser(options.user);
+        if (!userInfo) {
+            interaction.editReply(`You need to specify the user.`)
+            return false;
+        }
+        user = await prisma.user.findUniqueOrThrow({ where: {discordId: userInfo.id } });
+    }
+    
     const guild = await prisma.guild.findUniqueOrThrow({ where: { id: guildId } });
     const application = await prisma.guildApplicant.findUnique({
         where: {
@@ -214,6 +218,9 @@ const acceptAction = async function(
     let message = `'${user.name}' was accepted into '${guild.name}'\n`;
     console.log(message);
     await interaction.editReply(message);
+    if (targetThread) {
+        await targetThread.send(`You have been accepted to ${guild.name}!`);
+    }
     await databaseHelper.writeToLogChannel(discordServer, guild.serverId, message);
     
     // find what guilds user is currently in so user can clean them all up if need be
@@ -288,7 +295,6 @@ const acceptAction = async function(
  * Decline a guild application
  * @param interaction The discord interaction
  * @param server The server application is in
- * @param gameId game application is for
  * @param prisma Prisma Client
  * @param caller The user who called this interaction
  * @param databaseHelper database helper
@@ -297,23 +303,21 @@ const acceptAction = async function(
 const declineAction = async function(
     interaction: ChatInputCommandInteraction,
     server: Server,
-    gameId: number,
     prisma: PrismaClient,
     caller: User,
     databaseHelper: DatabaseHelper,
 ): Promise<boolean> {
-    const userInfo = interaction.options.getUser(options.user)!;
-
-    const user = await prisma.user.findUniqueOrThrow({ where: {discordId: userInfo.id } });
-    const application = await prisma.guildApplicant.findUnique({
-        where: {
-            userId_gameId_serverId: {
-                userId: user.id,
-                gameId: gameId,
-                serverId: server.id
-            }
-        }
-    });
+    // only handling this command from recruitment thread
+    const interactionInfo = await getGuildApplyInteractionInfo(prisma, databaseHelper, interaction);
+    if (!interactionInfo) {
+        interaction.editReply('This command can only be ran within a recruitment thread.')
+        return false;
+    }
+    const { application, sourceChannel, targetThread } = interactionInfo;
+    if (sourceChannel.channelType !== ChannelPurposeType.Recruitment) {
+        interaction.editReply('This command can only be ran within a recruitment thread.')
+        return false;
+    }
     
     const discordServer = interaction.guild!;
     const discordCaller = await discordServer.members.fetch(caller.discordId!);
@@ -334,9 +338,10 @@ const declineAction = async function(
     }
     await prisma.guildApplicant.delete({ where: { id: application.id } });
 
-    const message = 'Application was declined';
+    const message = `${application.user.name}'s application for ${sourceChannel.guild!.name} was declined.`;
     console.log(message);
     await interaction.editReply(message);
+    await targetThread.send('This application was declined. Feel free to apply again in the future.');
     await databaseHelper.writeToLogChannel(discordServer, server.id, message);
     return true;
 }
@@ -345,7 +350,6 @@ const declineAction = async function(
  * Apply to a guild.
  * @param interaction The discord interaction
  * @param server The server application is in
- * @param gameId game application is for
  * @param prisma Prisma Client
  * @param caller The user who called this interaction
  * @param databaseHelper database helper
@@ -354,11 +358,11 @@ const declineAction = async function(
 const applyAction = async function(
     interaction: ChatInputCommandInteraction,
     server: Server,
-    gameId: number,
     prisma: PrismaClient,
     caller: User,
     databaseHelper: DatabaseHelper
 ): Promise<boolean> {
+    const gameId = interaction.options.getInteger(options.game)!;
     let guildId = interaction.options.getInteger(options.guild);
 
     let guild: Guild | null | undefined = null;
@@ -435,7 +439,7 @@ const applyAction = async function(
 
     // send messages
     const recruitChannelMessage = `<@${caller.discordId}> just applied for a guild. <#${recruitThread.id}> is their private application chat.`;
-    const recruitThreadMessage = `${caller.name} just applied ${guild.guildId === '' ? '!' : `for ${guild.name}!`}'}\nAdding ${managementRoles.map(role => `<@&${role.discordId}>`).join(', ')} to the thread.`;
+    const recruitThreadMessage = `${caller.name} just applied for ${guild.name}!\nAdding ${managementRoles.map(role => `<@&${role.discordId}>`).join(', ')} to the thread.`;
     const applicantThreadMessage = `Hi <@${caller.discordId}>!\nThank you for applying! You can talk about your application in this thread.`;
     await discordRecruitChannel.send(recruitChannelMessage);
     await recruitThread.send(recruitThreadMessage);
