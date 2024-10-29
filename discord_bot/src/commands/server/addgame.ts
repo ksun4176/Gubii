@@ -1,5 +1,5 @@
 import { AutocompleteInteraction, ChannelType, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import { CommandInterface, GetCommandInfo } from "../../CommandInterface";
+import { CommandInterface, CommandLevel, GetCommandInfo } from "../../CommandInterface";
 import { Prisma } from "@prisma/client";
 import { ChannelPurposeType, UserRoleType } from "../../DatabaseHelper";
 
@@ -13,6 +13,7 @@ const options = {
 }
 
 const addgameCommand: CommandInterface = {
+    level: CommandLevel.All,
     data: new SlashCommandBuilder()
         .setName('addgame')
         .setDescription('Add a game to the server')

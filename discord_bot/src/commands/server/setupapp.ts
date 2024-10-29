@@ -1,5 +1,5 @@
 import { AutocompleteInteraction, ChannelType, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import { CommandInterface, GetCommandInfo } from "../../CommandInterface";
+import { CommandInterface, CommandLevel, GetCommandInfo } from "../../CommandInterface";
 import { Prisma } from "@prisma/client";
 import { UserRoleType } from "../../DatabaseHelper";
 
@@ -8,6 +8,7 @@ const options = {
 }
 
 const setupappCommand: CommandInterface = {
+    level: CommandLevel.All,
     data: new SlashCommandBuilder()
         .setName('setupapp')
         .setDescription('Add information for the guild application')

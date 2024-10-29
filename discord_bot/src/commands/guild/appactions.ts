@@ -1,5 +1,5 @@
 import { ActionRowBuilder, AnyThreadChannel, AutocompleteInteraction, BaseGuildTextChannel, ButtonBuilder, ButtonStyle, ChannelType, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import { CommandInterface, GetCommandInfo } from "../../CommandInterface";
+import { CommandInterface, CommandLevel, GetCommandInfo } from "../../CommandInterface";
 import { Guild, Prisma, PrismaClient, Server, User } from "@prisma/client";
 import { ChannelPurposeType, DatabaseHelper, UserRoleType } from "../../DatabaseHelper";
 import { getChannelThread, getGuildApplyInteractionInfo } from "../../DiscordHelper";
@@ -22,6 +22,7 @@ const buttons = {
 }
 
 const appActionCommands: CommandInterface = {
+    level: CommandLevel.All,
     data: new SlashCommandBuilder()
         .setName('application')
         .setDescription('Actions you can take on an application')

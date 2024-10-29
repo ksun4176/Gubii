@@ -2,11 +2,18 @@ import { PrismaClient } from "@prisma/client";
 import { AutocompleteInteraction, ChatInputCommandInteraction, SharedSlashCommand, User } from "discord.js";
 import { DatabaseHelper } from "./DatabaseHelper";
 
+export enum CommandLevel {
+    All = 1,
+    Premium = 2,
+    Owner = 3
+}
+
 /**
  * Interface for individual commands.
  * This contains all the information used by command handlers in discord.
  */
 export interface CommandInterface {
+    level: CommandLevel,
     data: SharedSlashCommand;
     execute: (interaction: ChatInputCommandInteraction) => Promise<void>;
     autocomplete?: (interaction: AutocompleteInteraction) => Promise<void>;

@@ -1,5 +1,5 @@
 import { ChannelType, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import { CommandInterface, GetCommandInfo } from "../../CommandInterface";
+import { CommandInterface, CommandLevel, GetCommandInfo } from "../../CommandInterface";
 import { ChannelPurposeType, UserRoleType } from "../../DatabaseHelper";
 
 const options = {
@@ -8,6 +8,7 @@ const options = {
 }
 
 const setupserverCommand: CommandInterface = {
+    level: CommandLevel.All,
     data: new SlashCommandBuilder()
         .setName('setupserver')
         .setDescription('Adds server information to the database')

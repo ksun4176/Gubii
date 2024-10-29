@@ -1,5 +1,5 @@
 import { AutocompleteInteraction, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import { CommandInterface, GetCommandInfo } from "../../CommandInterface";
+import { CommandInterface, CommandLevel, GetCommandInfo } from "../../CommandInterface";
 import { Prisma } from "@prisma/client";
 import { UserRoleType } from "../../DatabaseHelper";
 
@@ -13,6 +13,7 @@ const options = {
 }
 
 const createguildCommand: CommandInterface = {
+    level: CommandLevel.All,
     data: new SlashCommandBuilder()
         .setName('createguild')
         .setDescription('Create (or update) a guild in the server')
