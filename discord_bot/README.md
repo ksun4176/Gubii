@@ -69,7 +69,7 @@ To verify that the docker container runs as expected, run these commands in term
 3. Run the push commands to upload new docker image
    Example:
    - `aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <repository-url>`
-   - `docker build -t bot-repo .`
-   - `docker tag bot-repo:latest <repository-url>/bot-repo:latest`
-   - `docker push <repository-url>/bot-repo:latest`
-4. Redeploy by calling `aws ecs update-service --cluster bot-cluster --service bot-service --force-new-deployment`
+   - `docker build -t bot .`
+   - `docker tag bot:latest <repository-url>/bot:latest`
+   - `docker push <repository-url>/bot:latest`
+4. Redeploy by calling `aws ecs update-service --cluster bot --service bot --force-new-deployment`

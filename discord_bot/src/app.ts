@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import { Client, Collection, IntentsBitField, Partials } from "discord.js";
 import { CommandInterface } from "./CommandInterface";
 import { addEventListeners, executeOnAllCommands } from "./DiscordHelper";
+import express, { Request, Response } from "express";
 
 // augment client with the command property
 declare module "discord.js" {
@@ -38,3 +39,13 @@ executeOnAllCommands(commandCallbackFn);
 addEventListeners(client);
 
 client.login(process.env.CLIENT_TOKEN);
+
+const app = express();
+const httpPort = "80";
+app.use(express.json());
+app.get("/", (_req: Request, res: Response) => {
+    res.send("Bot is up and running");
+});
+app.listen(httpPort, () => {
+    console.log(`[server]: Server is running.`);
+});
