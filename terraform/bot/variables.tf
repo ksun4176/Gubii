@@ -1,29 +1,11 @@
-variable "vpc_id" {
-  description = "VPC"
+variable "iam_exec_role_name" {
+  description = "Name of IAM role for task execution"
   type        = string
   sensitive   = true
 }
 
-variable "iam_role_name" {
-  description = "Name of IAM role to attach task execution policy"
-  type        = string
-  sensitive   = true
-}
-
-variable "iam_instance_profile_name" {
-  description = "Name of IAM instance profile linked to the IAM role"
-  type        = string
-  sensitive   = true
-}
-
-variable "iam_role_arn" {
-  description = "Name of IAM role to attach task execution policy"
-  type        = string
-  sensitive   = true
-}
-
-variable "ami_id" {
-  description = "AMI to use for instances"
+variable "iam_exec_role_arn" {
+  description = "ARN of IAM role for task execution"
   type        = string
   sensitive   = true
 }
@@ -34,35 +16,17 @@ variable "sshkey_name" {
   sensitive   = true
 }
 
-variable "public_subnet_a_id" {
-  description = "Public subnet A"
-  type        = string
+variable "public_subnets" {
+  description = "Public subnets"
+  type        = list(string)
   sensitive   = true
 }
 
-variable "public_subnet_b_id" {
-  description = "Public subnet B"
-  type        = string
-  sensitive   = true
-}
-
-variable "public_subnet_c_id" {
-  description = "Public subnet C"
-  type        = string
-  sensitive   = true
-}
-
-variable "private_subnet_a_id" {
-  description = "Private subnet A"
-  type        = string
-  sensitive   = true
-}
-
-variable "private_subnet_b_id" {
-  description = "Private subnet B"
-  type        = string
-  sensitive   = true
-}
+# variable "private_subnets" {
+#   description = "Private subnets"
+#   type        = list(string)
+#   sensitive   = true
+# }
 
 variable "bot_port" {
   description = "Exposed port for bot"

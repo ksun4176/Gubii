@@ -1,36 +1,18 @@
-variable "vpc_id" {
-  description = "VPC"
-  type        = string
-  sensitive   = true
-}
-
-variable "ami_id" {
-  description = "AMI to use for instances"
-  type        = string
-  sensitive   = true
-}
-
 variable "sshkey_name" {
   description = "SSH Key name in the pair"
   type        = string
   sensitive   = true
 }
 
-variable "public_subnet_a_id" {
-  description = "Public subnet A"
-  type        = string
+variable "public_subnets" {
+  description = "Public subnets"
+  type        = list(string)
   sensitive   = true
 }
 
-variable "private_subnet_a_id" {
-  description = "Private subnet A"
-  type        = string
-  sensitive   = true
-}
-
-variable "private_subnet_b_id" {
-  description = "Private subnet B"
-  type        = string
+variable "private_subnets" {
+  description = "Private subnets"
+  type        = list(string)
   sensitive   = true
 }
 

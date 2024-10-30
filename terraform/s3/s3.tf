@@ -1,6 +1,13 @@
 # Deployment region
 data "aws_region" "current" {}
 
+# Default VPC
+resource "aws_default_vpc" "main" {
+  tags = {
+    Name = "main"
+  }
+}
+
 # IAM policy attachment
 data "aws_iam_policy_document" "s3" {
   statement {
@@ -20,7 +27,7 @@ resource "aws_iam_policy" "s3" {
 }
 
 resource "aws_iam_role_policy_attachment" "s3_policy" {
-  role        = var.iam_role_name
+  role        = var.iam_exec_role_name
   policy_arn  = "${aws_iam_policy.s3.arn}"
 }
 
@@ -36,12 +43,12 @@ resource "aws_s3_bucket" "bot" {
 resource "aws_s3_object" "envfile" {
   bucket = aws_s3_bucket.bot.id
   key = "bot.env"
-  source = ".env"
+  source = var.botenv_source
 }
 
 # VPC endpoint
 resource "aws_vpc_endpoint" "s3" {
-  vpc_id          = var.vpc_id
+  vpc_id          = aws_default_vpc.main.id
   service_name    = "com.amazonaws.${data.aws_region.current.name}.s3"
   route_table_ids = [var.private_route_table_id]
   vpc_endpoint_type = "Gateway"

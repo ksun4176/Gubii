@@ -1,6 +1,13 @@
+# Default VPC
+resource "aws_default_vpc" "main" {
+  tags = {
+    Name = "main"
+  }
+}
+
 # Security Group
 resource "aws_security_group" "rds" {
-  vpc_id      = var.vpc_id
+  vpc_id      = aws_default_vpc.main.id
   name        = "rds security group"
   description = "security group for RDS that allows DB port and all egress traffic"
   egress {
@@ -23,7 +30,7 @@ resource "aws_security_group" "rds" {
 }
 
 resource "aws_security_group" "allow_ssh" {
-  vpc_id      = var.vpc_id
+  vpc_id      = aws_default_vpc.main.id
   name        = "allow ssh security group"
   description = "security group that allows ssh and all egress traffic"
   egress {
@@ -45,13 +52,24 @@ resource "aws_security_group" "allow_ssh" {
   }
 }
 
+# Latest AMI from amazon
+data "aws_ami" "amazon_linux_2" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm-*-x86_64-ebs"]
+  }
+}
+
 # Jump Box
 resource "aws_instance" "bastion" {
-  ami                     = var.ami_id
+  ami                     = data.aws_ami.amazon_linux_2.id
   instance_type           = "t2.micro"
   key_name                = var.sshkey_name
   vpc_security_group_ids  = [aws_security_group.allow_ssh.id]
-  subnet_id               = var.public_subnet_a_id
+  subnet_id               = element(var.public_subnets, 0)
 
   tags = {
     Name = "bastion"
@@ -61,7 +79,7 @@ resource "aws_instance" "bastion" {
 # Subnet Group 
 resource "aws_db_subnet_group" "rds_subnets" {
   name        = "gubii-db-subnets"
-  subnet_ids  = [var.private_subnet_a_id, var.private_subnet_b_id]
+  subnet_ids  = var.private_subnets
 
   tags = {
     Name      = "Gubii DB Subnet Group"

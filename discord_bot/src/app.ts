@@ -38,14 +38,19 @@ executeOnAllCommands(commandCallbackFn);
 
 addEventListeners(client);
 
-client.login(process.env.CLIENT_TOKEN);
-
-const app = express();
-const httpPort = "80";
-app.use(express.json());
-app.get("/", (_req: Request, res: Response) => {
-    res.send("Bot is up and running");
-});
-app.listen(httpPort, () => {
-    console.log(`[server]: Server is running.`);
-});
+const main = async () => {
+    try {
+        await client.login(process.env.CLIENT_TOKEN);
+        const app = express();
+        const port = "80";
+        app.use(express.json());
+        app.get("/", (_req: Request, res: Response) => {
+            res.send("Bot is up and running");
+        });
+        app.listen(port, () => console.log('Listening on port 80'));
+    }
+    catch (error) {
+        console.log(error);
+    }
+}
+main();
