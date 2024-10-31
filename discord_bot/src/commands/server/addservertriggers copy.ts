@@ -51,6 +51,11 @@ const addServerTriggersCommand: CommandInterface = {
                 return;
             }
 
+            if (channelInfo.type !== ChannelType.GuildText) {
+                errorMessage += `- Could not add channel. It needs to be a text channel.\n`;
+                throw new Error(errorMessage);
+            }
+
             let message = '';
             let serverMessage = await prisma.serverMessage.findUnique({ where: {
                 serverId_eventId: {
