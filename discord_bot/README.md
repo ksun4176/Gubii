@@ -4,7 +4,7 @@ A bot to create their community structure straight within Discord.
 ## How to Use
 ### Set up Server and Guilds (can be ran by server owner + admins)
 1. Server owner: Add bot to server
-   - Go to https://discord.com/oauth2/authorize?client_id=1246175342918635530&permissions=8&integration_type=0&scope=bot
+   - Go to https://discord.com/oauth2/authorize?client_id=1246175342918635530
    - Select your server
    - Press Authorize
 2. Server owner: Run ```/setupserver```

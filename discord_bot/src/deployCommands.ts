@@ -49,7 +49,7 @@ const DeployCommands = async () => {
 		console.log(`Started refreshing ${ownerCommands.length} owner (/) commands.`);
 		const ownerData = await rest.put(
 			Routes.applicationGuildCommands(process.env.CLIENT_ID!, process.env.OWNER_SERVER_ID!),
-			{ body: premiumCommands }
+			{ body: ownerCommands }
 		);
 		console.log(`Successfully reloaded ${(ownerData as any[]).length} owner (/) commands.`);
 	} 
