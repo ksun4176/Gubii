@@ -1,7 +1,7 @@
 import { ActionRowBuilder, AnyThreadChannel, AutocompleteInteraction, BaseGuildTextChannel, ButtonBuilder, ButtonStyle, ChannelType, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { CommandInterface, CommandLevel, GetCommandInfo } from "../../CommandInterface";
 import { Guild, Prisma, PrismaClient, Server, User } from "@prisma/client";
-import { ChannelPurposeType, DatabaseHelper, UserRoleType } from "../../DatabaseHelper";
+import { ChannelPurposeType, DatabaseHelper, GuildEvent, UserRoleType } from "../../DatabaseHelper";
 import { getChannelThread, getGuildApplyInteractionInfo } from "../../DiscordHelper";
 
 const subcommands = {
@@ -378,7 +378,7 @@ const applyAction = async function(
     }
     else {
         const gameGuilds = await databaseHelper.getGameGuilds(server.id);
-        guild = gameGuilds.find(guild => guild.gameId = gameId);
+        guild = gameGuilds.find(guild => guild.gameId === gameId);
     }
 
     if (!guild) {
@@ -445,10 +445,12 @@ const applyAction = async function(
     });
 
     // get guild application
-    const applicationText = await prisma.guildApplication.findUnique({ where: {
-        serverId_gameId: {
+    const gameGuild = await databaseHelper.getGameGuild(guild);
+    const applicationText = await prisma.guildMessage.findUnique({ where: {
+        serverId_guildId_eventId: {
             serverId: server.id,
-            gameId: gameId
+            guildId: gameGuild!.id,
+            eventId: GuildEvent.Apply
         }
     }});
 

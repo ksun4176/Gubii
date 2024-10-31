@@ -15,6 +15,16 @@ export enum UserRoleType {
     GuildMember = 5
 }
 
+export enum ServerEvent {
+    ServerMemberAdd = 1
+}
+
+export enum GuildEvent {
+    Apply = 1,
+    Accept = 2,
+    Transfer = 3
+}
+
 export class DatabaseHelper {
     private __prisma: PrismaClient;
     
