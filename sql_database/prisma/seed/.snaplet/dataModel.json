@@ -262,34 +262,6 @@
           "isGenerated": false,
           "sequence": false,
           "hasDefaultValue": false
-        },
-        {
-          "name": "guild_applicant",
-          "type": "guild_applicant",
-          "isRequired": false,
-          "kind": "object",
-          "relationName": "guild_applicantTogame",
-          "relationFromFields": [],
-          "relationToFields": [],
-          "isList": true,
-          "isId": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": false
-        },
-        {
-          "name": "guild_application",
-          "type": "guild_application",
-          "isRequired": false,
-          "kind": "object",
-          "relationName": "guild_applicationTogame",
-          "relationFromFields": [],
-          "relationToFields": [],
-          "isList": true,
-          "isId": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": false
         }
       ],
       "uniqueConstraints": [
@@ -465,6 +437,20 @@
           "hasDefaultValue": false
         },
         {
+          "name": "guild_message",
+          "type": "guild_message",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "guild_messageToguild",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
           "name": "user_role",
           "type": "user_role",
           "isRequired": false,
@@ -501,20 +487,6 @@
       "schemaName": "gubii",
       "tableName": "guild_applicant",
       "fields": [
-        {
-          "id": "gubii.guild_applicant.game_id",
-          "name": "game_id",
-          "columnName": "game_id",
-          "type": "int",
-          "isRequired": true,
-          "kind": "scalar",
-          "isList": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": false,
-          "isId": false,
-          "maxLength": null
-        },
         {
           "id": "gubii.guild_applicant.guild_id",
           "name": "guild_id",
@@ -574,24 +546,6 @@
           "hasDefaultValue": false,
           "isId": false,
           "maxLength": null
-        },
-        {
-          "name": "game",
-          "type": "game",
-          "isRequired": true,
-          "kind": "object",
-          "relationName": "guild_applicantTogame",
-          "relationFromFields": [
-            "game_id"
-          ],
-          "relationToFields": [
-            "id"
-          ],
-          "isList": false,
-          "isId": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": false
         },
         {
           "name": "guild",
@@ -656,24 +610,99 @@
           ]
         },
         {
-          "name": "gubii.guild_applicant.user_id_game_id_server_id",
+          "name": "gubii.guild_applicant.user_id_guild_id_server_id",
           "fields": [
             "user_id",
-            "game_id",
+            "guild_id",
             "server_id"
           ]
         }
       ]
     },
-    "guild_application": {
-      "id": "gubii.guild_application",
+    "guild_event": {
+      "id": "gubii.guild_event",
       "schemaName": "gubii",
-      "tableName": "guild_application",
+      "tableName": "guild_event",
       "fields": [
         {
-          "id": "gubii.guild_application.game_id",
-          "name": "game_id",
-          "columnName": "game_id",
+          "id": "gubii.guild_event.id",
+          "name": "id",
+          "columnName": "id",
+          "type": "int",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": {
+            "identifier": "gubii.guild_event.id",
+            "increment": 1,
+            "start": 1
+          },
+          "hasDefaultValue": false,
+          "isId": true,
+          "maxLength": null
+        },
+        {
+          "id": "gubii.guild_event.name",
+          "name": "name",
+          "columnName": "name",
+          "type": "varchar",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": 255
+        },
+        {
+          "name": "guild_message",
+          "type": "guild_message",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "guild_messageToguild_event",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        }
+      ],
+      "uniqueConstraints": [
+        {
+          "name": "gubii.guild_event.id",
+          "fields": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "guild_message": {
+      "id": "gubii.guild_message",
+      "schemaName": "gubii",
+      "tableName": "guild_message",
+      "fields": [
+        {
+          "id": "gubii.guild_message.channel_id",
+          "name": "channel_id",
+          "columnName": "channel_id",
+          "type": "varchar",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": 191
+        },
+        {
+          "id": "gubii.guild_message.event_id",
+          "name": "event_id",
+          "columnName": "event_id",
           "type": "int",
           "isRequired": true,
           "kind": "scalar",
@@ -685,7 +714,21 @@
           "maxLength": null
         },
         {
-          "id": "gubii.guild_application.id",
+          "id": "gubii.guild_message.guild_id",
+          "name": "guild_id",
+          "columnName": "guild_id",
+          "type": "int",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "gubii.guild_message.id",
           "name": "id",
           "columnName": "id",
           "type": "int",
@@ -694,7 +737,7 @@
           "isList": false,
           "isGenerated": false,
           "sequence": {
-            "identifier": "gubii.guild_application.id",
+            "identifier": "gubii.guild_message.id",
             "increment": 1,
             "start": 1
           },
@@ -703,7 +746,7 @@
           "maxLength": null
         },
         {
-          "id": "gubii.guild_application.server_id",
+          "id": "gubii.guild_message.server_id",
           "name": "server_id",
           "columnName": "server_id",
           "type": "int",
@@ -717,7 +760,7 @@
           "maxLength": null
         },
         {
-          "id": "gubii.guild_application.text",
+          "id": "gubii.guild_message.text",
           "name": "text",
           "columnName": "text",
           "type": "longtext",
@@ -731,13 +774,31 @@
           "maxLength": 4294967295
         },
         {
-          "name": "game",
-          "type": "game",
+          "name": "guild",
+          "type": "guild",
           "isRequired": true,
           "kind": "object",
-          "relationName": "guild_applicationTogame",
+          "relationName": "guild_messageToguild",
           "relationFromFields": [
-            "game_id"
+            "guild_id"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "isList": false,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "guild_event",
+          "type": "guild_event",
+          "isRequired": true,
+          "kind": "object",
+          "relationName": "guild_messageToguild_event",
+          "relationFromFields": [
+            "event_id"
           ],
           "relationToFields": [
             "id"
@@ -753,7 +814,7 @@
           "type": "server",
           "isRequired": true,
           "kind": "object",
-          "relationName": "guild_applicationToserver",
+          "relationName": "guild_messageToserver",
           "relationFromFields": [
             "server_id"
           ],
@@ -769,16 +830,17 @@
       ],
       "uniqueConstraints": [
         {
-          "name": "gubii.guild_application.id",
+          "name": "gubii.guild_message.id",
           "fields": [
             "id"
           ]
         },
         {
-          "name": "gubii.guild_application.server_id_game_id",
+          "name": "gubii.guild_message.server_id_guild_id_event_id",
           "fields": [
             "server_id",
-            "game_id"
+            "guild_id",
+            "event_id"
           ]
         }
       ]
@@ -905,11 +967,25 @@
           "hasDefaultValue": false
         },
         {
-          "name": "guild_application",
-          "type": "guild_application",
+          "name": "guild_message",
+          "type": "guild_message",
           "isRequired": false,
           "kind": "object",
-          "relationName": "guild_applicationToserver",
+          "relationName": "guild_messageToserver",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "server_message",
+          "type": "server_message",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "server_messageToserver",
           "relationFromFields": [],
           "relationToFields": [],
           "isList": true,
@@ -944,6 +1020,199 @@
           "name": "gubii.server.discord_id",
           "fields": [
             "discord_id"
+          ]
+        }
+      ]
+    },
+    "server_event": {
+      "id": "gubii.server_event",
+      "schemaName": "gubii",
+      "tableName": "server_event",
+      "fields": [
+        {
+          "id": "gubii.server_event.id",
+          "name": "id",
+          "columnName": "id",
+          "type": "int",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": {
+            "identifier": "gubii.server_event.id",
+            "increment": 1,
+            "start": 1
+          },
+          "hasDefaultValue": false,
+          "isId": true,
+          "maxLength": null
+        },
+        {
+          "id": "gubii.server_event.name",
+          "name": "name",
+          "columnName": "name",
+          "type": "varchar",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": 255
+        },
+        {
+          "name": "server_message",
+          "type": "server_message",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "server_messageToserver_event",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        }
+      ],
+      "uniqueConstraints": [
+        {
+          "name": "gubii.server_event.id",
+          "fields": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "server_message": {
+      "id": "gubii.server_message",
+      "schemaName": "gubii",
+      "tableName": "server_message",
+      "fields": [
+        {
+          "id": "gubii.server_message.channel_id",
+          "name": "channel_id",
+          "columnName": "channel_id",
+          "type": "varchar",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": 191
+        },
+        {
+          "id": "gubii.server_message.event_id",
+          "name": "event_id",
+          "columnName": "event_id",
+          "type": "int",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "gubii.server_message.id",
+          "name": "id",
+          "columnName": "id",
+          "type": "int",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": {
+            "identifier": "gubii.server_message.id",
+            "increment": 1,
+            "start": 1
+          },
+          "hasDefaultValue": false,
+          "isId": true,
+          "maxLength": null
+        },
+        {
+          "id": "gubii.server_message.server_id",
+          "name": "server_id",
+          "columnName": "server_id",
+          "type": "int",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "gubii.server_message.text",
+          "name": "text",
+          "columnName": "text",
+          "type": "longtext",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": 4294967295
+        },
+        {
+          "name": "server",
+          "type": "server",
+          "isRequired": true,
+          "kind": "object",
+          "relationName": "server_messageToserver",
+          "relationFromFields": [
+            "server_id"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "isList": false,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "server_event",
+          "type": "server_event",
+          "isRequired": true,
+          "kind": "object",
+          "relationName": "server_messageToserver_event",
+          "relationFromFields": [
+            "event_id"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "isList": false,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        }
+      ],
+      "uniqueConstraints": [
+        {
+          "name": "gubii.server_message.id",
+          "fields": [
+            "id"
+          ]
+        },
+        {
+          "name": "gubii.server_message.server_id_event_id",
+          "fields": [
+            "server_id",
+            "event_id"
           ]
         }
       ]

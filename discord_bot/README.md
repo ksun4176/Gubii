@@ -54,7 +54,8 @@ The languages we are using are TypeScript.
 To start a development bot, run these commands in terminal:
 1. Copy over `../sql_database/prisma/schema.prisma` to `discord_bot` so the Prisma Client can build out correctly
 2. Install node dependencies using `npm install`
-3. Initiate a development server using `npm run dev`
+3. Make sure your prisma client is up to date by running `npx prisma generate`.
+4. Initiate a development server using `npm run dev`
    - This uses nodemon which will track real time updates to your TypeScript + JSON and restart the server accordingly. 
 
 If you change the command definition (description, options, etc.), you will need to redeploy:

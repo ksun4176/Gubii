@@ -31,6 +31,22 @@ const main = async () => {
         'Guild Member',
     ]
     await seed.userRoleType(userRoleTypes.map((type, index) => { return { id: index+1, name: type } }));
+    
+    // Seed server events
+    const serverEvents = [
+        'ServerMemberAdd',
+        'BotLog',
+    ]
+    await seed.serverEvent(serverEvents.map((event, index) => { return { id: index+1, name: event } }));
+
+    // Seed guild events
+    const guildEvents = [
+        'Apply',
+        'Accept',
+        'Transfer'
+    ]
+    await seed.guildEvent(guildEvents.map((event, index) => { return { id: index+1, name: event } }));
+
     // Seed games
     const games = [
         'AFK Arena',

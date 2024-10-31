@@ -50,10 +50,6 @@ model Game {
   name   String @db.VarChar(255) @unique(map: "uc_game")
   // all guilds related to game
   guilds Guild[]
-  // all applicants to this game
-  applicants GuildApplicant[]
-  // application content
-  applications GuildApplication[]
 
   @@map("game")
 }
@@ -78,7 +74,9 @@ model Guild {
   // who applied to this guild
   applicants GuildApplicant[]
   // channels that belong to the guild
-  channels ChannelPurpose[]
+  channels   ChannelPurpose[]
+  // messages sent for a guild
+  messages   GuildMessage[]
 
   @@unique([gameId, guildId, serverId], map: "uc_guild")
   @@map("guild")
@@ -93,56 +91,100 @@ model GuildApplicant {
   // foreign key to guild user applied to
   guildId  Int    @map("guild_id")
   guild    Guild  @relation(fields: [guildId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "guild_applicant_guild_fk")
-  // foreign key to game user applied to
-  gameId   Int    @map("game_id")
-  game     Game   @relation(fields: [gameId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "guild_applicant_game_fk")
   // foreign key to server user applied to
   serverId Int    @map("server_id")
   server   Server @relation(fields: [serverId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "guild_applicant_server_fk")
 
-  @@unique([userId, gameId, serverId], map: "uc_guild_applicant")
+  @@unique([userId, guildId, serverId], map: "uc_guild_applicant")
   @@map("guild_applicant")
 }
 
-// Guild Application content
-model GuildApplication {
-  id       Int    @id @default(autoincrement())
-  // discord ID linked to channel
-  text     String @db.LongText
-  // foreign key to server application belongs to
-  serverId Int    @map("server_id")
-  server   Server @relation(fields: [serverId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "guild_application_server_fk")
-  // foreign key to game application belongs to
-  gameId   Int    @map("game_id")
-  game     Game   @relation(fields: [gameId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "guild_application_game_fk")
+// Event in guild that can trigger a message
+model GuildEvent {
+  id    Int    @id @default(autoincrement())
+  // name of event
+  name  String @db.VarChar(255)
+  // all guild messages that map to the event
+  messages GuildMessage[]
 
-  @@unique([serverId, gameId], map: "uc_guild_application")
-  @@map("guild_application")
+  @@map("guild_event")
+}
+
+// Message to send in server for a guild
+model GuildMessage {
+  id        Int         @id @default(autoincrement())
+  // foreign key to server message belongs to
+  serverId  Int         @map("server_id")
+  server    Server      @relation(fields: [serverId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "g_server_message_fk")
+  // foreign key to guild user applied to
+  guildId   Int         @map("guild_id")
+  guild     Guild       @relation(fields: [guildId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "guild_message_fk")
+  // event that triggers this message
+  eventId   Int         @map("event_id")
+  event     GuildEvent  @relation(fields: [eventId], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "guild_message_event_fk")
+  // text to show when event happens
+  text      String      @db.LongText
+  // discord channel for message to show up in
+  channelId String?     @map("channel_id")
+
+  @@unique([serverId, guildId, eventId], map: "uc_guild_message")
+  @@map("guild_message")
 }
 
 // Information about the server/community
 model Server {
-  id           Int     @id @default(autoincrement())
+  id             Int     @id @default(autoincrement())
   // name of community
-  name         String  @db.VarChar(255)
+  name           String  @db.VarChar(255)
   // discord ID linked to server. Let it be null in case there is no discord set up
-  discordId    String? @map("discord_id") @unique(map: "uc_server") @db.VarChar(255)
+  discordId      String? @map("discord_id") @unique(map: "uc_server") @db.VarChar(255)
   // whether this server signed up for premium service
-  isPremium    Boolean @default(false) @map("is_premium")
+  isPremium      Boolean @default(false) @map("is_premium")
   // whether the server is active
-  active       Boolean @default(true)
+  active         Boolean @default(true)
   // all guilds in server
-  guilds       Guild[]
+  guilds         Guild[]
   // all roles related to server
-  roles        UserRole[]
+  roles          UserRole[]
   // who applied to this guild
-  applicants   GuildApplicant[]
-  // application content
-  applications GuildApplication[]
+  applicants     GuildApplicant[]
   // channels that belong to the server
-  channels     ChannelPurpose[]
+  channels       ChannelPurpose[]
+  // messages shown in server
+  serverMessages ServerMessage[]
+  // messages shown in server for a guild
+  guildMessages  GuildMessage[]
 
   @@map("server")
+}
+
+// Event in server that can trigger a message
+model ServerEvent {
+  id    Int    @id @default(autoincrement())
+  // name of event
+  name  String @db.VarChar(255)
+  // all server messages that map to the event
+  messages ServerMessage[]
+
+  @@map("server_event")
+}
+
+// Message to send in server
+model ServerMessage {
+  id        Int         @id @default(autoincrement())
+  // foreign key to server message belongs to
+  serverId  Int         @map("server_id")
+  server    Server      @relation(fields: [serverId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "server_message_fk")
+  // event that triggers this message
+  eventId   Int         @map("event_id")
+  event     ServerEvent @relation(fields: [eventId], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "server_message_event_fk")
+  // text to show when event happens
+  text      String      @db.LongText
+  // discord channel for message to show up in
+  channelId String?     @map("channel_id")
+
+  @@unique([serverId, eventId], map: "uc_server_message")
+  @@map("server_message")
 }
 
 // Information about a user
