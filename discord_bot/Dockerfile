@@ -2,7 +2,7 @@
 FROM node:18-alpine AS pre-build
 
 WORKDIR /app
-COPY package.json ./
+COPY package*.json ./
 COPY schema.prisma ./
 RUN npm install
 RUN npx prisma generate
@@ -28,5 +28,6 @@ COPY --from=build /app/package*.json ./
 RUN npm ci --omit=dev
 
 COPY --from=build /app/dist ./dist
+COPY --from=build /app/node_modules ./node_modules
 
 CMD ["node", "dist/app.js"]
