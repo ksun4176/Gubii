@@ -122,23 +122,25 @@ model GuildApplication {
 
 // Information about the server/community
 model Server {
-  id         Int     @id @default(autoincrement())
+  id           Int     @id @default(autoincrement())
   // name of community
-  name       String  @db.VarChar(255)
+  name         String  @db.VarChar(255)
   // discord ID linked to server. Let it be null in case there is no discord set up
-  discordId String? @map("discord_id") @unique(map: "uc_server") @db.VarChar(255)
+  discordId    String? @map("discord_id") @unique(map: "uc_server") @db.VarChar(255)
+  // whether this server signed up for premium service
+  isPremium    Boolean @default(false) @map("is_premium")
   // whether the server is active
-  active     Boolean @default(true)
+  active       Boolean @default(true)
   // all guilds in server
-  guilds     Guild[]
+  guilds       Guild[]
   // all roles related to server
-  roles      UserRole[]
+  roles        UserRole[]
   // who applied to this guild
-  applicants GuildApplicant[]
+  applicants   GuildApplicant[]
   // application content
   applications GuildApplication[]
   // channels that belong to the server
-  channels ChannelPurpose[]
+  channels     ChannelPurpose[]
 
   @@map("server")
 }

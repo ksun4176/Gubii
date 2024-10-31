@@ -23,8 +23,9 @@ The database for Gubii. Here you can update the database schema or build out a t
    - DB_HOST: `localhost`
    - DB_PORT: `<local-port-you-connect-to>`
 4. Update the database schema using `npm run migrate`
-5. If your database does not autopopulate with data, run `npx prisma db seed`
-6. Close the ssh tunnel by killing the process listening to the port
+5. Close the ssh tunnel by killing the process listening to the port
+(Other) If new database, populate with data using `npx prisma db seed -- --skipTest`
+
 
 ## Technical Details
 This executable is built in Node.js.

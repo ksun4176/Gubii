@@ -1,20 +1,27 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import { AutocompleteInteraction, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { CommandInterface, CommandLevel, GetCommandInfo } from "../../CommandInterface";
 import { Prisma } from "@prisma/client";
 import { UserRoleType } from "../../DatabaseHelper";
 
 const options = {
-    name: 'name',
+    server: 'server',
+    enable: 'enable'
 }
 
-const addGameToDbCommand: CommandInterface = {
+const addPremiumServerCommand: CommandInterface = {
     level: CommandLevel.Owner,
     data: new SlashCommandBuilder()
-        .setName('addgametodb')
+        .setName('addpremiumserver')
         .setDescription('Add a game to the database')
-        .addStringOption(option => 
-            option.setName(options.name)
-                .setDescription('name of the game to add')
+        .addIntegerOption(option => 
+            option.setName(options.server)
+                .setDescription('Server to add')
+                .setRequired(true)
+                .setAutocomplete(true)
+        )
+        .addBooleanOption(option =>
+            option.setName(options.enable)
+                .setDescription('Whether to enable/disable premium')
                 .setRequired(true)
         ),
     
@@ -26,7 +33,9 @@ const addGameToDbCommand: CommandInterface = {
         await interaction.deferReply();
         const serverInfo = interaction.guild;
 
-        const name = interaction.options.getString(options.name)!;
+        const serverId = interaction.options.getInteger(options.server)!;
+        const enable = interaction.options.getBoolean(options.enable)!;
+
         try {
             const { prisma, caller, databaseHelper } = await GetCommandInfo(interaction.user);
 
@@ -43,21 +52,42 @@ const addGameToDbCommand: CommandInterface = {
                 return;
             }
 
-            const game = await prisma.game.create({
+            const serverUpdated = await prisma.server.update({
+                where: {
+                    id: serverId
+                },
                 data: {
-                    name: name
+                    isPremium: enable
                 }
             });
 
-            let message = `Game '${game.name}' is added to the database\n`;
+            let message = `Server '${serverUpdated.name}' is  ${serverUpdated.isPremium ? 'enabled' : 'disabled'} \n`;
             console.log(message);
             await interaction.editReply(message);
         }
         catch (error) {
             console.error(error);
-            await interaction.editReply('There was an issue adding support for the game.');
+            await interaction.editReply('There was an issue updating the server.');
         }
-    }
+    },
+
+    async autocomplete(interaction: AutocompleteInteraction) {
+        try {
+            const { prisma } = await GetCommandInfo(interaction.user);
+            const servers = await prisma.server.findMany({
+                where: {
+                    discordId: { not: null },
+                    active: true
+                }
+            });
+            await interaction.respond(
+                servers.map(server => ({ name: server.name, value: server.id })),
+            );
+        }
+        catch (error) {
+            console.log(error);
+        }
+    },
 }
 
-export = addGameToDbCommand;
+export = addPremiumServerCommand;

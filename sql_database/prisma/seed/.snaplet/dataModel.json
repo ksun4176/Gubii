@@ -1,132 +1,5 @@
 {
   "models": {
-    "_prisma_migrations": {
-      "id": "gubii._prisma_migrations",
-      "schemaName": "gubii",
-      "tableName": "_prisma_migrations",
-      "fields": [
-        {
-          "id": "gubii._prisma_migrations.applied_steps_count",
-          "name": "applied_steps_count",
-          "columnName": "applied_steps_count",
-          "type": "int",
-          "isRequired": true,
-          "kind": "scalar",
-          "isList": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": true,
-          "isId": false,
-          "maxLength": null
-        },
-        {
-          "id": "gubii._prisma_migrations.checksum",
-          "name": "checksum",
-          "columnName": "checksum",
-          "type": "varchar",
-          "isRequired": true,
-          "kind": "scalar",
-          "isList": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": false,
-          "isId": false,
-          "maxLength": 64
-        },
-        {
-          "id": "gubii._prisma_migrations.finished_at",
-          "name": "finished_at",
-          "columnName": "finished_at",
-          "type": "datetime",
-          "isRequired": true,
-          "kind": "scalar",
-          "isList": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": false,
-          "isId": false,
-          "maxLength": null
-        },
-        {
-          "id": "gubii._prisma_migrations.id",
-          "name": "id",
-          "columnName": "id",
-          "type": "varchar",
-          "isRequired": true,
-          "kind": "scalar",
-          "isList": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": false,
-          "isId": true,
-          "maxLength": 36
-        },
-        {
-          "id": "gubii._prisma_migrations.logs",
-          "name": "logs",
-          "columnName": "logs",
-          "type": "text",
-          "isRequired": true,
-          "kind": "scalar",
-          "isList": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": false,
-          "isId": false,
-          "maxLength": 65535
-        },
-        {
-          "id": "gubii._prisma_migrations.migration_name",
-          "name": "migration_name",
-          "columnName": "migration_name",
-          "type": "varchar",
-          "isRequired": true,
-          "kind": "scalar",
-          "isList": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": false,
-          "isId": false,
-          "maxLength": 255
-        },
-        {
-          "id": "gubii._prisma_migrations.rolled_back_at",
-          "name": "rolled_back_at",
-          "columnName": "rolled_back_at",
-          "type": "datetime",
-          "isRequired": true,
-          "kind": "scalar",
-          "isList": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": false,
-          "isId": false,
-          "maxLength": null
-        },
-        {
-          "id": "gubii._prisma_migrations.started_at",
-          "name": "started_at",
-          "columnName": "started_at",
-          "type": "datetime",
-          "isRequired": true,
-          "kind": "scalar",
-          "isList": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": true,
-          "isId": false,
-          "maxLength": null
-        }
-      ],
-      "uniqueConstraints": [
-        {
-          "name": "gubii._prisma_migrations.id",
-          "fields": [
-            "id"
-          ]
-        }
-      ]
-    },
     "channel_purpose": {
       "id": "gubii.channel_purpose",
       "schemaName": "gubii",
@@ -165,12 +38,12 @@
           "name": "guild_id",
           "columnName": "guild_id",
           "type": "int",
-          "isRequired": true,
+          "isRequired": false,
           "kind": "scalar",
           "isList": false,
           "isGenerated": false,
           "sequence": false,
-          "hasDefaultValue": false,
+          "hasDefaultValue": true,
           "isId": false,
           "maxLength": null
         },
@@ -934,12 +807,12 @@
           "name": "discord_id",
           "columnName": "discord_id",
           "type": "varchar",
-          "isRequired": true,
+          "isRequired": false,
           "kind": "scalar",
           "isList": false,
           "isGenerated": false,
           "sequence": false,
-          "hasDefaultValue": false,
+          "hasDefaultValue": true,
           "isId": false,
           "maxLength": 255
         },
@@ -959,6 +832,20 @@
           },
           "hasDefaultValue": false,
           "isId": true,
+          "maxLength": null
+        },
+        {
+          "id": "gubii.server.is_premium",
+          "name": "is_premium",
+          "columnName": "is_premium",
+          "type": "tinyint",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
           "maxLength": null
         },
         {
@@ -1085,12 +972,12 @@
           "name": "discord_id",
           "columnName": "discord_id",
           "type": "varchar",
-          "isRequired": true,
+          "isRequired": false,
           "kind": "scalar",
           "isList": false,
           "isGenerated": false,
           "sequence": false,
-          "hasDefaultValue": false,
+          "hasDefaultValue": true,
           "isId": false,
           "maxLength": 255
         },
@@ -1099,12 +986,12 @@
           "name": "email",
           "columnName": "email",
           "type": "varchar",
-          "isRequired": true,
+          "isRequired": false,
           "kind": "scalar",
           "isList": false,
           "isGenerated": false,
           "sequence": false,
-          "hasDefaultValue": false,
+          "hasDefaultValue": true,
           "isId": false,
           "maxLength": 255
         },
@@ -1304,12 +1191,12 @@
           "name": "discord_id",
           "columnName": "discord_id",
           "type": "varchar",
-          "isRequired": true,
+          "isRequired": false,
           "kind": "scalar",
           "isList": false,
           "isGenerated": false,
           "sequence": false,
-          "hasDefaultValue": false,
+          "hasDefaultValue": true,
           "isId": false,
           "maxLength": 255
         },
@@ -1318,12 +1205,12 @@
           "name": "guild_id",
           "columnName": "guild_id",
           "type": "int",
-          "isRequired": true,
+          "isRequired": false,
           "kind": "scalar",
           "isList": false,
           "isGenerated": false,
           "sequence": false,
-          "hasDefaultValue": false,
+          "hasDefaultValue": true,
           "isId": false,
           "maxLength": null
         },
@@ -1364,12 +1251,12 @@
           "name": "role_type",
           "columnName": "role_type",
           "type": "int",
-          "isRequired": true,
+          "isRequired": false,
           "kind": "scalar",
           "isList": false,
           "isGenerated": false,
           "sequence": false,
-          "hasDefaultValue": false,
+          "hasDefaultValue": true,
           "isId": false,
           "maxLength": null
         },
@@ -1534,6 +1421,133 @@
       "uniqueConstraints": [
         {
           "name": "gubii.user_role_type.id",
+          "fields": [
+            "id"
+          ]
+        }
+      ]
+    },
+    "_prisma_migrations": {
+      "id": "gubii._prisma_migrations",
+      "schemaName": "gubii",
+      "tableName": "_prisma_migrations",
+      "fields": [
+        {
+          "id": "gubii._prisma_migrations.applied_steps_count",
+          "name": "applied_steps_count",
+          "columnName": "applied_steps_count",
+          "type": "int",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "gubii._prisma_migrations.checksum",
+          "name": "checksum",
+          "columnName": "checksum",
+          "type": "varchar",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": 64
+        },
+        {
+          "id": "gubii._prisma_migrations.finished_at",
+          "name": "finished_at",
+          "columnName": "finished_at",
+          "type": "datetime",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "gubii._prisma_migrations.id",
+          "name": "id",
+          "columnName": "id",
+          "type": "varchar",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": true,
+          "maxLength": 36
+        },
+        {
+          "id": "gubii._prisma_migrations.logs",
+          "name": "logs",
+          "columnName": "logs",
+          "type": "text",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": 65535
+        },
+        {
+          "id": "gubii._prisma_migrations.migration_name",
+          "name": "migration_name",
+          "columnName": "migration_name",
+          "type": "varchar",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": 255
+        },
+        {
+          "id": "gubii._prisma_migrations.rolled_back_at",
+          "name": "rolled_back_at",
+          "columnName": "rolled_back_at",
+          "type": "datetime",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "gubii._prisma_migrations.started_at",
+          "name": "started_at",
+          "columnName": "started_at",
+          "type": "datetime",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        }
+      ],
+      "uniqueConstraints": [
+        {
+          "name": "gubii._prisma_migrations.id",
           "fields": [
             "id"
           ]

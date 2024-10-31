@@ -11,7 +11,7 @@ A bot to create their community structure straight within Discord.
    - (Optional) Add server admin role to give other users permission to manage the server
    - (Optional) Add bot log channel to log everything the bot does in your server.
 3. Run ```/addgame``` to let us know what games you are playing
-   - If you do not see the game you're playing, contact me to add it in
+   - If you do not see the game you're playing, go to https://discord.gg/UEWzKAu3 and any admin can help you add it in
    - Add shared roles to more easily mention the whole group of people
    - Add channels where we can spawn threads to handle application process
 4. Run ```/createguild``` for each guild
@@ -31,6 +31,10 @@ A bot to create their community structure straight within Discord.
    - You will then be prompted to remove old guild roles which is equivalent to a transfer
 6. Run ```/kickguild``` to kick a user from guilds
    - (Optional) Specify a single guild to kick the user from
+
+## Premium Servers
+1. Go to https://discord.gg/UEWzKAu3 and any admin can help add you as a premium server
+2. We will then have to redeploy the commands so that your server gets all the new functionality
 
 ## FAQs
 

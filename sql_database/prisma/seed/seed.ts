@@ -47,8 +47,7 @@ const main = async () => {
         const numUsers = seed.$store.user.length;
         // Seed servers
         await seed.server((x) => x({ min: 3, max: 9 }, (ctx) => ({
-            name: `Gubii Test Server ${ctx.index+1}`,
-            discordId: `server${ctx.index+1}`
+            name: `Gubii Test Server ${ctx.index+1}`
         })));
         for (const server of seed.$store.server) {
             // Seed server owner roles -> links between user + role
