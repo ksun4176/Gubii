@@ -50,6 +50,8 @@ model Game {
   name   String @db.VarChar(255) @unique(map: "uc_game")
   // all guilds related to game
   guilds Guild[]
+  // all applicants to this game
+  applicants GuildApplicant[]
 
   @@map("game")
 }
@@ -91,11 +93,14 @@ model GuildApplicant {
   // foreign key to guild user applied to
   guildId  Int    @map("guild_id")
   guild    Guild  @relation(fields: [guildId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "guild_applicant_guild_fk")
+  // foreign key to game user applied to
+  gameId   Int    @map("game_id")
+  game     Game   @relation(fields: [gameId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "guild_applicant_game_fk")
   // foreign key to server user applied to
   serverId Int    @map("server_id")
   server   Server @relation(fields: [serverId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "guild_applicant_server_fk")
 
-  @@unique([userId, guildId, serverId], map: "uc_guild_applicant")
+  @@unique([userId, gameId, serverId], map: "uc_guild_applicant")
   @@map("guild_applicant")
 }
 

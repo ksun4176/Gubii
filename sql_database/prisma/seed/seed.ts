@@ -35,7 +35,6 @@ const main = async () => {
     // Seed server events
     const serverEvents = [
         'ServerMemberAdd',
-        'BotLog',
     ]
     await seed.serverEvent(serverEvents.map((event, index) => { return { id: index+1, name: event } }));
 

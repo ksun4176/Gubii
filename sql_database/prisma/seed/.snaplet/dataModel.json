@@ -262,6 +262,20 @@
           "isGenerated": false,
           "sequence": false,
           "hasDefaultValue": false
+        },
+        {
+          "name": "guild_applicant",
+          "type": "guild_applicant",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "guild_applicantTogame",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
         }
       ],
       "uniqueConstraints": [
@@ -488,6 +502,20 @@
       "tableName": "guild_applicant",
       "fields": [
         {
+          "id": "gubii.guild_applicant.game_id",
+          "name": "game_id",
+          "columnName": "game_id",
+          "type": "int",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
           "id": "gubii.guild_applicant.guild_id",
           "name": "guild_id",
           "columnName": "guild_id",
@@ -546,6 +574,24 @@
           "hasDefaultValue": false,
           "isId": false,
           "maxLength": null
+        },
+        {
+          "name": "game",
+          "type": "game",
+          "isRequired": true,
+          "kind": "object",
+          "relationName": "guild_applicantTogame",
+          "relationFromFields": [
+            "game_id"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "isList": false,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
         },
         {
           "name": "guild",
@@ -610,10 +656,10 @@
           ]
         },
         {
-          "name": "gubii.guild_applicant.user_id_guild_id_server_id",
+          "name": "gubii.guild_applicant.user_id_game_id_server_id",
           "fields": [
             "user_id",
-            "guild_id",
+            "game_id",
             "server_id"
           ]
         }
