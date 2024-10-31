@@ -65,6 +65,9 @@ const DeployCommands = async () => {
 					}
 					console.log(`Started refreshing ${premiumCommands.length} premium (/) commands.`);
 					for (const server of result) {
+						if (!server.discord_id || server.discord_id === process.env.OWNER_SERVER_ID) {
+							continue;
+						}
 						const premData = await rest.put(
 							Routes.applicationGuildCommands(process.env.CLIENT_ID!, server.discord_id),
 							{ body: premiumCommands }

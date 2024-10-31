@@ -103,6 +103,7 @@ const addGameTriggersCommand: CommandInterface = {
                             guildId: gameGuild.id,
                             eventId: eventId,
                             text: guildMessageText,
+                            channelId: channelInfo?.id
                         },
                         where: {
                             serverId_guildId_eventId: {
@@ -113,24 +114,25 @@ const addGameTriggersCommand: CommandInterface = {
                         },
                         update: {
                             text: guildMessageText,
+                            channelId: channelInfo?.id
                         },
                     })
-                    message = `The new text:\n`;
+                    message = `**The new text:**\n`;
                     if (eventId === GuildEvent.Apply) {
                         message += `\`\`\`${guildMessageText}\`\`\`\n`;
                     }
                     else {
-                        message += guildMessageText;
+                        message += `${guildMessageText}\n`;
                     }
 
                     if (channelInfo) {
-                        message += `Text will be sent to <#${channelInfo.id}> on event trigger`;
+                        message += `\n**Text will be sent to <#${channelInfo.id}> on event trigger.\n**`;
                     }
                     console.log(message);
                     await databaseHelper.writeToLogChannel(serverInfo, server.id, message);
                 }
                 else {
-                    message = 'Nothing was entered so application was not overwritten.';
+                    message = 'Nothing was entered so text was not overwritten.';
                 }
                 await interaction.followUp(message);
             }
