@@ -96,13 +96,13 @@ resource "aws_ecr_repository" "bot" {
 }
 
 # ECS cluster
-resource "aws_ecs_cluster" "bot_cluster" {
-  name = "bot-cluster"
+resource "aws_ecs_cluster" "bot" {
+  name = "bot"
 }
 
 # CloudWatch Log Group
 resource "aws_cloudwatch_log_group" "bot_lg" {
-  name = "/ecs/bot-task"
+  name = "/bot/bot-task"
   retention_in_days = 7
 }
 
@@ -146,9 +146,9 @@ resource "aws_ecs_task_definition" "bot_td" {
 }
 
 # ECS service
-resource "aws_ecs_service" "bot_service" {
-  name            = "bot-service"
-  cluster         = aws_ecs_cluster.bot_cluster.id
+resource "aws_ecs_service" "bot" {
+  name            = "bot"
+  cluster         = aws_ecs_cluster.bot.id
   task_definition = aws_ecs_task_definition.bot_td.arn
   launch_type = "FARGATE"
   desired_count   = 1

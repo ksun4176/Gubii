@@ -143,7 +143,7 @@ module "bot" {
   source = "./bot"
   iam_exec_role_name = aws_iam_role.ecs_exec_role.name
   iam_exec_role_arn = aws_iam_role.ecs_exec_role.arn
-  sshkey_name = aws_key_pair.sshkey.key_name
+  # sshkey_name = aws_key_pair.sshkey.key_name
   public_subnets = [aws_default_subnet.public_a.id, aws_default_subnet.public_b.id, aws_default_subnet.public_c.id]
   # private_subnets = [aws_subnet.private_a.id, aws_subnet.private_b.id]
   bot_port = 80

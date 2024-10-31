@@ -10,11 +10,11 @@ variable "iam_exec_role_arn" {
   sensitive   = true
 }
 
-variable "sshkey_name" {
-  description = "SSH Key name in the pair"
-  type        = string
-  sensitive   = true
-}
+# variable "sshkey_name" {
+#   description = "SSH Key name in the pair"
+#   type        = string
+#   sensitive   = true
+# }
 
 variable "public_subnets" {
   description = "Public subnets"
