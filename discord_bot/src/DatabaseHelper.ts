@@ -1,4 +1,4 @@
-import { Guild, Prisma, PrismaClient } from "@prisma/client";
+import { Guild, Prisma, PrismaClient, Server, User } from "@prisma/client";
 import { APIRole, Guild as DiscordServer, GuildMember, Role, User as DiscordUser } from "discord.js";
 
 export enum ChannelPurposeType {
@@ -323,4 +323,30 @@ export class DatabaseHelper {
         }
     }
     //#endregion Channel Helpers
+
+    //#region String formatting
+    /**
+     * Get the formatted guild application to be sent out.
+     * @param server Server
+     * @param gameGuild Guild of game
+     * @param applicant Applicant
+     * @returns the original + formatted application if it exists
+     */
+    public async getGuildApplication(server: Server, gameGuild: Guild, applicant: User) {
+        const applicationText = await this.__prisma.guildMessage.findUnique({ where: {
+            serverId_guildId_eventId: {
+                serverId: server.id,
+                guildId: gameGuild!.id,
+                eventId: GuildEvent.Apply
+            }
+        }});
+        if (!applicationText) {
+            return null;
+        }
+        return {
+            original: applicationText.text,
+            formatted: `Hi <@${applicant.discordId}>!\nThank you for applying!\n\n**Can you fill out the application below?**\n\`\`\`${applicationText.text}\`\`\`\n`
+        };
+    }
+    //#endregion String formatting
 }

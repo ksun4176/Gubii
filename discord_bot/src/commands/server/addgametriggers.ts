@@ -97,50 +97,53 @@ const addGameTriggersCommand: CommandInterface = {
                 });
 
                 let guildMessageText = response.first()!.content;
-
-                if (guildMessageText) {
-                    // remove ``` from application text
-                    if (eventId === GuildEvent.Apply) {
-                        guildMessageText = guildMessageText.replace(/```/g,'');
-                    }
-                    await prisma.guildMessage.upsert({
-                        create: {
+                if (!guildMessageText) {
+                    await interaction.followUp('Nothing was entered so text was not overwritten.');
+                    return;
+                }
+                // save message
+                if (eventId === GuildEvent.Apply) {
+                    // remove any ``` from application text
+                    guildMessageText = guildMessageText.replace(/```/g,'');
+                }
+                await prisma.guildMessage.upsert({
+                    create: {
+                        serverId: server.id,
+                        guildId: gameGuild.id,
+                        eventId: eventId,
+                        text: guildMessageText,
+                        channelId: channelInfo?.id
+                    },
+                    where: {
+                        serverId_guildId_eventId: {
                             serverId: server.id,
                             guildId: gameGuild.id,
-                            eventId: eventId,
-                            text: guildMessageText,
-                            channelId: channelInfo?.id
-                        },
-                        where: {
-                            serverId_guildId_eventId: {
-                                serverId: server.id,
-                                guildId: gameGuild.id,
-                                eventId: eventId
-                            }
-                        },
-                        update: {
-                            text: guildMessageText,
-                            channelId: channelInfo?.id
-                        },
-                    })
-                    message = `**The new text:**\n`;
-                    if (eventId === GuildEvent.Apply) {
-                        message += `\`\`\`${guildMessageText}\`\`\`\n`;
-                    }
-                    else {
-                        message += `${guildMessageText}\n`;
-                    }
+                            eventId: eventId
+                        }
+                    },
+                    update: {
+                        text: guildMessageText,
+                        channelId: channelInfo?.id
+                    },
+                })
 
-                    if (channelInfo) {
-                        message += `\n**Text will be sent to <#${channelInfo.id}> on event trigger.\n**`;
-                    }
-                    console.log(message);
-                    await databaseHelper.writeToLogChannel(serverInfo, server.id, message);
+                // display message
+                message = `**Here is the now saved text:**\n`;
+                switch (eventId) {
+                    case GuildEvent.Apply: 
+                        const applicationText = await databaseHelper.getGuildApplication(server, gameGuild, caller);
+                        message += applicationText!.formatted;
+                        break;
+                    default:
+                        message += `${guildMessageText}\n`
+                        break;
                 }
-                else {
-                    message = 'Nothing was entered so text was not overwritten.';
+                if (channelInfo) {
+                    message += `\n**Text will be sent to <#${channelInfo.id}> on event trigger.\n**`;
                 }
+                console.log(message);
                 await interaction.followUp(message);
+                await databaseHelper.writeToLogChannel(serverInfo, server.id, message);
             }
             catch (error) {
                 console.error(error);

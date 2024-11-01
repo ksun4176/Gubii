@@ -1,7 +1,7 @@
 import { ActionRowBuilder, AnyThreadChannel, AutocompleteInteraction, BaseGuildTextChannel, ButtonBuilder, ButtonStyle, ChannelType, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { CommandInterface, CommandLevel, GetCommandInfo } from "../../CommandInterface";
 import { Guild, Prisma, PrismaClient, Server, User } from "@prisma/client";
-import { ChannelPurposeType, DatabaseHelper, GuildEvent, UserRoleType } from "../../DatabaseHelper";
+import { ChannelPurposeType, DatabaseHelper, UserRoleType } from "../../DatabaseHelper";
 import { getChannelThread, getGuildApplyInteractionInfo } from "../../DiscordHelper";
 
 const subcommands = {
@@ -446,13 +446,7 @@ const applyAction = async function(
 
     // get guild application
     const gameGuild = await databaseHelper.getGameGuild(guild);
-    const applicationText = await prisma.guildMessage.findUnique({ where: {
-        serverId_guildId_eventId: {
-            serverId: server.id,
-            guildId: gameGuild!.id,
-            eventId: GuildEvent.Apply
-        }
-    }});
+    const applicationText = await databaseHelper.getGuildApplication(server, gameGuild!, caller);
 
     // send messages
     const recruitChannelMessage = `<@${caller.discordId}> just applied for a guild. <#${recruitThread.id}> is their private application chat.`;
@@ -460,16 +454,13 @@ const applyAction = async function(
     
     let recruitThreadMessage = `${caller.name} just applied for ${guild.name}!\nAdding ${managementRoles.map(role => `<@&${role.discordId}>`).join(', ')} to the thread.\n`;
     if (applicationText) {
-        recruitThreadMessage += `\nHere is the app sent to the applicant:\n\`\`\`${applicationText.text}\`\`\``;
+        recruitThreadMessage += `\nHere is the app sent to the applicant:\n\`\`\`${applicationText.original}\`\`\``;
     }
     await recruitThread.send(recruitThreadMessage);
 
-    let applicantThreadMessage = `Hi <@${caller.discordId}>!\nThank you for applying!\n`;
+    let applicantThreadMessage = `Hi <@${caller.discordId}>!\nThank you for applying!\nWe will reach out here to talk about your application.\n`;
     if (applicationText) {
-        applicantThreadMessage += `\n**Can you fill out the application below?**\n\`\`\`${applicationText.text}\`\`\``;
-    }
-    else {
-        applicantThreadMessage += `We will reach out here to talk about your application.`;
+        applicantThreadMessage = applicationText.formatted;
     }
     await applicantThread.send(applicantThreadMessage);
 
