@@ -7,11 +7,12 @@ A bot to create their community structure straight within Discord.
    - Go to https://discord.com/oauth2/authorize?client_id=1246175342918635530
    - Select your server
    - Press Authorize
-2. Run `/setupserver`
+2. **<u>Important</u>** In Server Settings > Roles, move up the Gubii role to the top of the list. This allows it to assign out roles correctly.
+3. Run `/setupserver`
    - (Optional) Add server admin role to give other users permission to manage the server
    - (Optional) Add bot log channel to log everything the bot does in your server
-3. Assign out the admin role now so they can also run following commands
-4. **(Premium Only)** Add a welcome message for when people join the server. Read more about this in the **<u>Premium Functionality</u>** section
+4. Assign out the admin role now so they can also run following commands
+5. **(Premium Only)** Add a welcome message for when people join the server. Read more about this in the **<u>Premium Functionality</u>** section
 
 ### Set up guilds (Only Server Owner + Admins)
 1. Run `/addgame` to let us know what games you are playing
