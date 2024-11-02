@@ -202,7 +202,6 @@ const acceptAction = async function(
     let roles: Prisma.UserRoleWhereInput[] = [
         { serverId: guild.serverId, roleType: UserRoleType.ServerOwner },
         { serverId: guild.serverId, roleType: UserRoleType.Administrator },
-        { serverId: guild.serverId, roleType: UserRoleType.GuildLead, guildId: guild.id },
         { serverId: guild.serverId, roleType: UserRoleType.GuildManagement, guildId: guild.id }
     ]
     const hasPermission = await databaseHelper.userHasPermission(discordCaller, discordServer, roles);

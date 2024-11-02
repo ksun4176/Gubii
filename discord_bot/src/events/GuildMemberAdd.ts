@@ -23,7 +23,7 @@ const guildMemberAddEvent: EventInterface<Events.GuildMemberAdd> = {
             }
 
             const discordChannel = await serverInfo.channels.fetch(welcomeMessage.channelId);
-            if (!discordChannel || discordChannel.type !== ChannelType.GuildText) {
+            if (!discordChannel?.isSendable()) {
                 return;
             }
             

@@ -26,19 +26,14 @@ const messageCreateEvent: EventInterface<Events.MessageCreate> = {
             }
             // notify management again if thread has been archived
             if (targetChannel.channelType === ChannelPurposeType.Recruitment && targetThread.archived) {
-                const managementRoles = await prisma.userRole.findMany({ where: { OR: [
-                    {
-                        roleType: UserRoleType.GuildLead,
-                        serverId: targetChannel.serverId,
-                        guildId: targetChannel.guildId
-                    },
-                    {
+                const managementRole = await prisma.userRole.findUniqueOrThrow({ where: {
+                    roleType_serverId_guildId: {
                         roleType: UserRoleType.GuildManagement,
                         serverId: targetChannel.serverId,
-                        guildId: targetChannel.guildId
+                        guildId: targetChannel.guildId!
                     }
-                ] } });
-                const recruitThreadMessage = `Re-adding ${managementRoles.map(role => `<@&${role.discordId}>`).join(', ')} to archived thread.`;
+                }});
+                const recruitThreadMessage = `Re-adding <@&${managementRole.discordId}> to archived thread.`;
                 await targetThread.send(recruitThreadMessage);
             }
     

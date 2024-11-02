@@ -121,7 +121,6 @@ const kickGuildCommand: CommandInterface = {
                         // check if they have guild management
                         for (let role of currentGuilds) {
                             roles = [
-                                { serverId: server.id, roleType: UserRoleType.GuildLead, guildId: role.guildId },
                                 { serverId: server.id, roleType: UserRoleType.GuildManagement, guildId: role.guildId },
                             ];
                             hasPermission = await databaseHelper.userHasPermission(discordCaller, serverInfo, roles);

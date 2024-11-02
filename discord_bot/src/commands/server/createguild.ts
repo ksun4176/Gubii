@@ -7,7 +7,6 @@ const options = {
     game: 'game',
     ingameid: 'ingameid',
     name: 'name',
-    leadrole: 'leadrole',
     managementrole: 'managementrole',
     memberrole: 'memberrole'
 }
@@ -34,11 +33,6 @@ const createguildCommand: CommandInterface = {
             .setRequired(true)
         )
         .addRoleOption(option =>
-            option.setName(options.leadrole)
-            .setDescription('role for guild lead')
-            .setRequired(true)
-        )
-        .addRoleOption(option =>
             option.setName(options.managementrole)
             .setDescription('role for guild management')
             .setRequired(true)
@@ -60,7 +54,6 @@ const createguildCommand: CommandInterface = {
         const gameId = interaction.options.getInteger(options.game)!;
         const inGameId = interaction.options.getString(options.ingameid)!;
         const name = interaction.options.getString(options.name)!;
-        const leadRoleInfo = interaction.options.getRole(options.leadrole)!;
         const managementRoleInfo = interaction.options.getRole(options.managementrole)!;
         const memberRoleInfo = interaction.options.getRole(options.memberrole)!;
         let errorMessage = 'There was an issue creating the guild.\n';
@@ -108,14 +101,6 @@ const createguildCommand: CommandInterface = {
                 `- Name: ${guild.name}\n` +
                 `- Game: ${guild.game.name}\n`;
             
-            try {
-                const leadRole = await databaseHelper.createGuildRole(guild, UserRoleType.GuildLead, leadRoleInfo);
-                message += `- Lead role: <@&${leadRole.discordId}>\n`;
-            }
-            catch (error) {
-                errorMessage += `- Could not add lead role. Has this role already been used?\n`;
-                throw error;
-            }
             try {
                 const managementRole = await databaseHelper.createGuildRole(guild, UserRoleType.GuildManagement, managementRoleInfo);
                 message += `- Management role: <@&${managementRole.discordId}>\n`;

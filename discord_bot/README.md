@@ -18,7 +18,7 @@ A bot to create their community structure straight within Discord.
 5. **(Recommended)** Run ```/addgametriggers``` to set up the application you want for the game
 
 ### User Management (can be ran by server owner + admins + guild management)
-1. Add server admin/guild lead/guild management role to the right people to give them permission to run respective commands
+1. Add server admin and guild management role to the right people to give them permission to run respective commands
 2. Anyone: Run ```/application apply``` to apply for any guild
    - (Optional) Specify a guild to apply to directly
 3. **Application threads will be spawned in specified channels**
@@ -35,6 +35,15 @@ A bot to create their community structure straight within Discord.
 ## Premium Servers
 1. Go to https://discord.gg/UEWzKAu3 and any admin can help add you as a premium server
 2. We will then have to redeploy the commands so that your server gets all the new functionality
+/addservertriggers
+<{user}>
+<{serverName}>
+<{serverAdmin}>
+<{gameName}>
+<{guildName}>
+<{guildManagement}>
+<{guildMembers}>
+[|apply|]
 
 ## FAQs
 

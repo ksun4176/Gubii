@@ -107,15 +107,7 @@ const main = async () => {
             // skip placeholders
             if (guild.guildId === '') {
                 continue;
-            } 
-            // Seed guild lead roles
-            await seed.userRole([{
-                name: `${guild.name} Lead`,
-                roleType: 3,
-                serverId: guild.serverId,
-                guildId: guild.id,
-                discordId: `guild${guild.id}lead`
-            }]);
+            }
             // Seed guild management roles
             await seed.userRole([{
                 name: `${guild.name} Management`,

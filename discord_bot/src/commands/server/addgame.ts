@@ -5,7 +5,6 @@ import { ChannelPurposeType, UserRoleType } from "../../DatabaseHelper";
 
 const options = {
     game: 'game',
-    leadrole: 'leadrole',
     managementrole: 'managementrole',
     memberrole: 'memberrole',
     recruitThread: 'recruitthread',
@@ -22,11 +21,6 @@ const addgameCommand: CommandInterface = {
                 .setDescription('game to add to server')
                 .setRequired(true)
                 .setAutocomplete(true)
-        )
-        .addRoleOption(option =>
-            option.setName(options.leadrole)
-            .setDescription('shared role for all guild leads for the game')
-            .setRequired(true)
         )
         .addRoleOption(option =>
             option.setName(options.managementrole)
@@ -58,7 +52,6 @@ const addgameCommand: CommandInterface = {
         const serverInfo = interaction.guild;
 
         const gameId = interaction.options.getInteger(options.game)!;
-        const leadRoleInfo = interaction.options.getRole(options.leadrole)!;
         const managementRoleInfo = interaction.options.getRole(options.managementrole)!;
         const memberRoleInfo = interaction.options.getRole(options.memberrole)!;
         const recruitChannelInfo = interaction.options.getChannel(options.recruitThread)!;
@@ -83,14 +76,6 @@ const addgameCommand: CommandInterface = {
             const gameGuild = await databaseHelper.createGameGuild(gameId, server.id);
 
             let message = `Game '${gameGuild.game.name}' is added to the server '${server.name}'\n`;
-            try {
-                const leadRole = await databaseHelper.createGuildRole(gameGuild, UserRoleType.GuildLead, leadRoleInfo);
-                message += `- Lead role: <@&${leadRole.discordId}>\n`;
-            }
-            catch (error) {
-                errorMessage += `- Could not add lead role. Has this role already been used?\n`;
-                throw error;
-            }
             try {
                 const managementRole = await databaseHelper.createGuildRole(gameGuild, UserRoleType.GuildManagement, managementRoleInfo);
                 message += `- Management role: <@&${managementRole.discordId}>\n`;

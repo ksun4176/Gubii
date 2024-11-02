@@ -31,7 +31,6 @@ const updateSharedRoles = async (member: GuildMember) => {
     const gameGuilds = await databaseHelper.getGameGuilds(server.id);
     const guildRoles = await prisma.userRole.findMany({
         where: { OR: [
-            UserRoleType.GuildLead,
             UserRoleType.GuildManagement,
             UserRoleType.GuildMember   
             ].map(roleType => { return { 

@@ -40,18 +40,13 @@ export const applyToGuild = async (
     }
 
     // get management roles
-    const managementRoles = await prisma.userRole.findMany({ where: { OR: [
-        {
-            roleType: UserRoleType.GuildLead,
-            server: server,
-            guild: guild
-        },
-        {
+    const managementRole = await prisma.userRole.findUniqueOrThrow({ where: {
+        roleType_serverId_guildId: {
             roleType: UserRoleType.GuildManagement,
-            server: server,
-            guild: guild
+            serverId: server.id,
+            guildId: guild.id
         }
-    ] } });
+    }});
 
     // find channels
     const recruitChannel = await databaseHelper.getGameChannel(guild, ChannelPurposeType.Recruitment);
@@ -106,7 +101,7 @@ export const applyToGuild = async (
     const recruitChannelMessage = `<@${caller.discordId}> just applied for a guild. <#${recruitThread.id}> is their private application chat.`;
     await discordRecruitChannel.send(recruitChannelMessage);
     
-    let recruitThreadMessage = `${caller.name} just applied for ${guild.name}!\nAdding ${managementRoles.map(role => `<@&${role.discordId}>`).join(', ')} to the thread.\n`;
+    let recruitThreadMessage = `${caller.name} just applied for ${guild.name}!\nAdding <@&${managementRole.discordId}> to the thread.\n`;
     if (applicationText) {
         recruitThreadMessage += `\nHere is the app sent to the applicant:\n\`\`\`${applicationText.original}\`\`\``;
     }
