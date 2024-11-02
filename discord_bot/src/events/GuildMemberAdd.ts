@@ -1,4 +1,4 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, Events, GuildMember, MessageCreateOptions, PartialGuildMember } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Events, GuildMember, MessageCreateOptions, PartialGuildMember } from "discord.js";
 import { EventInterface, GetEventInfo } from "../EventInterface";
 import { ServerEvent } from "../DatabaseHelper";
 import { Buttons } from "../buttons/ButtonInterface";
