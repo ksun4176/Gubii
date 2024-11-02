@@ -348,5 +348,63 @@ export class DatabaseHelper {
             formatted: `Hi <@${applicant.discordId}>!\nThank you for applying!\n\n**Can you fill out the application below?**\n\`\`\`${applicationText.text}\`\`\`\n`
         };
     }
+
+    /**
+     * Replace placeholders in the message and extract if there are any special actions to add to the message
+     * @param content content to replace placeholders
+     * @param user user context
+     * @param server server context
+     * @param guild guild context
+     * @returns formatted message and any special actions to add to the message
+     */
+    public async replaceMessagePlaceholders(content: string, user?: User, server?: Server, guild?: Guild) {
+        let formattedText = content;
+        if (user) {
+            formattedText = formattedText.replace(/\<\{user\}\>/g, `<@${user.discordId}>`);
+        }
+        
+        if (server) {
+            formattedText = formattedText.replace(/\<\{serverName\}\>/g, server.name);
+
+            const adminRole = await this.__prisma.userRole.findFirst({ where: {
+                roleType: UserRoleType.Administrator,
+                serverId: server.id,
+            }});
+            if (adminRole) {
+                formattedText = formattedText.replace(/\<\{serverAdmin\}\>/g, `<@&${adminRole.discordId}>`);
+            }
+        }
+        if (guild) {
+            formattedText = formattedText.replace(/\<\{guildName\}\>/g, `<@${guild.name}>`);
+            
+            const game = await this.__prisma.game.findUnique({ where: { id: guild.gameId } });
+            formattedText = formattedText.replace(/\<\{gameName\}\>/g, `<@${game!.name}>`);
+
+            const guildRoles = await this.__prisma.userRole.findMany({ where: { OR: [
+                {
+                    roleType: UserRoleType.GuildManagement,
+                    serverId: guild.serverId,
+                    guildId: guild.id,
+                },
+                {
+                    roleType: UserRoleType.GuildMember,
+                    serverId: guild.serverId,
+                    guildId: guild.id,
+                }
+            ]}});
+            formattedText = formattedText.replace(/\<\{guildManagement\}\>/g, guildRoles.filter(role => role.roleType === UserRoleType.GuildManagement).map(role => `<@&${role.discordId}>`).join(' '));
+            formattedText = formattedText.replace(/\<\{guildMembers\}\>/g, guildRoles.filter(role => role.roleType === UserRoleType.GuildMember).map(role => `<@&${role.discordId}>`).join(' '));
+        }
+
+        const applyButton = formattedText.indexOf('[|apply|]') >= 0;
+        if (applyButton) {
+            formattedText = formattedText.replace(/\[\|apply\|\]/g, ``);
+        }
+
+        return {
+            formatted: formattedText,
+            apply: applyButton
+        }
+    }
     //#endregion String formatting
 }

@@ -84,9 +84,9 @@ const addGameTriggersCommand: CommandInterface = {
                 }
             }});
             if (guildMessage) {
-                message += `Here is the old text:\n\`\`\`${guildMessage.text}\`\`\`\n`;
+                message += `**Here is the old text:**\n${guildMessage.text}\n`;
             }
-            message += `You can now enter your new text in the chat:\n`;
+            message += `\n**You can now enter your new text in the chat:**\n`;
             await interaction.editReply(message);
 
             try {
@@ -132,14 +132,14 @@ const addGameTriggersCommand: CommandInterface = {
                 switch (eventId) {
                     case GuildEvent.Apply: 
                         const applicationText = await databaseHelper.getGuildApplication(server, gameGuild, caller);
-                        message += applicationText!.formatted;
+                        message += `${applicationText!.formatted}\n`;
                         break;
                     default:
                         message += `${guildMessageText}\n`
                         break;
                 }
                 if (channelInfo) {
-                    message += `\n**Text will be sent to <#${channelInfo.id}> on event trigger.\n**`;
+                    message += `\n**Text will be sent to <#${channelInfo.id}> on event trigger.**\n`;
                 }
                 console.log(message);
                 await interaction.followUp(message);

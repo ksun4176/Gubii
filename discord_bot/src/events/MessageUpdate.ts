@@ -1,6 +1,6 @@
 import { EmbedBuilder, Events, Message, PartialMessage } from "discord.js";
 import { EventInterface, GetEventInfo } from "../EventInterface";
-import { getGuildApplyMessageInfo } from "../DiscordHelper";
+import { getGuildApplyMessageInfo } from "../helpers/ApplyHelper";
 
 const messageUpdateEvent: EventInterface<Events.MessageUpdate> = {
     name: Events.MessageUpdate,

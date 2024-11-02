@@ -1,7 +1,7 @@
 import { EmbedBuilder, Events, Message, OmitPartialGroupDMChannel } from "discord.js";
 import { EventInterface, GetEventInfo } from "../EventInterface";
 import { ChannelPurposeType, UserRoleType } from "../DatabaseHelper";
-import { getGuildApplyMessageInfo } from "../DiscordHelper";
+import { getGuildApplyMessageInfo } from "../helpers/ApplyHelper";
 
 const messageCreateEvent: EventInterface<Events.MessageCreate> = {
     name: Events.MessageCreate,

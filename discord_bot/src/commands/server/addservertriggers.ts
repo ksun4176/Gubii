@@ -64,9 +64,9 @@ const addServerTriggersCommand: CommandInterface = {
                 }
             }});
             if (serverMessage) {
-                message += `Here is the old text:\n\`\`\`${serverMessage.text}\`\`\`\n`;
+                message += `**Here is the old text:**\n${serverMessage.text}\n`;
             }
-            message += `You can now enter your new text in the chat:\n`;
+            message += `\n**You can now enter your new text in the chat:**\n`;
             await interaction.editReply(message);
 
             try {
@@ -77,34 +77,46 @@ const addServerTriggersCommand: CommandInterface = {
                 });
 
                 let serverMessageText = response.first()!.content;
-
-                if (serverMessageText) {
-                    await prisma.serverMessage.upsert({
-                        create: {
+                if (!serverMessageText) {
+                    await interaction.followUp('Nothing was entered so text was not overwritten.');
+                    return;
+                }
+                // save message
+                await prisma.serverMessage.upsert({
+                    create: {
+                        serverId: server.id,
+                        eventId: eventId,
+                        text: serverMessageText,
+                        channelId: channelInfo.id
+                    },
+                    where: {
+                        serverId_eventId: {
                             serverId: server.id,
-                            eventId: eventId,
-                            text: serverMessageText,
-                            channelId: channelInfo.id
-                        },
-                        where: {
-                            serverId_eventId: {
-                                serverId: server.id,
-                                eventId: eventId
-                            }
-                        },
-                        update: {
-                            text: serverMessageText,
-                            channelId: channelInfo.id
-                        },
-                    })
-                    message = `**The new text:**\n${serverMessageText}\n\n**Text will be sent to <#${channelInfo.id}> on event trigger.**\n`;
-                    console.log(message);
-                    await databaseHelper.writeToLogChannel(serverInfo, server.id, message);
+                            eventId: eventId
+                        }
+                    },
+                    update: {
+                        text: serverMessageText,
+                        channelId: channelInfo.id
+                    },
+                });
+                // display message
+                const savedMessage = await prisma.serverMessage.findUniqueOrThrow({ where: {
+                    serverId_eventId: {
+                        serverId: server.id,
+                        eventId: eventId
+                    }
+                }});
+                message = `**Here is the now saved text:**\n`;
+                const messageInfo = await databaseHelper.replaceMessagePlaceholders(savedMessage.text, caller, server);
+                message += `${messageInfo.formatted}\n`;
+                if (messageInfo.apply) {
+                    message += `__The Apply button will be added to the bottom of the message as well__\n`;
                 }
-                else {
-                    message = 'Nothing was entered so text was not overwritten.';
-                }
+                message += `\n**Text will be sent to <#${channelInfo.id}> on event trigger.**\n`;
+                console.log(message);
                 await interaction.followUp(message);
+                await databaseHelper.writeToLogChannel(serverInfo, server.id, message);
             }
             catch (error) {
                 console.error(error);

@@ -1,7 +1,7 @@
 import { Events, Message, OmitPartialGroupDMChannel, PartialMessage } from "discord.js";
 import { EventInterface, GetEventInfo } from "../EventInterface";
-import { getGuildApplyMessageInfo } from "../DiscordHelper";
 import { ChannelPurposeType } from "../DatabaseHelper";
+import { getGuildApplyMessageInfo } from "../helpers/ApplyHelper";
 
 const messageDeleteEvent: EventInterface<Events.MessageDelete> = {
     name: Events.MessageDelete,

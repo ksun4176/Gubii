@@ -1,8 +1,8 @@
-import { ActionRowBuilder, AnyThreadChannel, AutocompleteInteraction, BaseGuildTextChannel, ButtonBuilder, ButtonStyle, ChannelType, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import { ActionRowBuilder, AnyThreadChannel, AutocompleteInteraction, BaseGuildTextChannel, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { CommandInterface, CommandLevel, GetCommandInfo } from "../../CommandInterface";
-import { Guild, Prisma, PrismaClient, Server, User } from "@prisma/client";
+import { Prisma, PrismaClient, Server, User } from "@prisma/client";
 import { ChannelPurposeType, DatabaseHelper, UserRoleType } from "../../DatabaseHelper";
-import { getChannelThread, getGuildApplyInteractionInfo } from "../../DiscordHelper";
+import { applyToGuild, getGuildApplyInteractionInfo } from "../../helpers/ApplyHelper";
 
 const subcommands = {
     accept: 'accept',
@@ -87,7 +87,10 @@ const appActionCommands: CommandInterface = {
                     await declineAction(interaction, server, prisma, caller, databaseHelper);
                     break;
                 case subcommands.apply:
-                    await applyAction(interaction, server, prisma, caller, databaseHelper);
+                    const gameId = interaction.options.getInteger(options.game)!;
+                    const guildId = interaction.options.getInteger(options.guild) ?? undefined;
+                    const applicantThread = await applyToGuild(interaction, server, prisma, caller, databaseHelper, guildId, gameId);
+                    await interaction.editReply(`You have successfully applied. Go to <#${applicantThread.id}> to go through your application.`);
                     break;
                 default:
                     await interaction.editReply('No action done');
@@ -350,122 +353,6 @@ const declineAction = async function(
     }
     await targetThread.send('This application was declined. Feel free to apply again in the future.');
     await databaseHelper.writeToLogChannel(discordServer, server.id, message);
-    return true;
-}
-
-/**
- * Apply to a guild.
- * @param interaction The discord interaction
- * @param server The server application is in
- * @param prisma Prisma Client
- * @param caller The user who called this interaction
- * @param databaseHelper database helper
- * @returns The response to display to user
- */
-const applyAction = async function(
-    interaction: ChatInputCommandInteraction,
-    server: Server,
-    prisma: PrismaClient,
-    caller: User,
-    databaseHelper: DatabaseHelper
-): Promise<boolean> {
-    const gameId = interaction.options.getInteger(options.game)!;
-    let guildId = interaction.options.getInteger(options.guild);
-
-    let guild: Guild | null | undefined = null;
-    if (guildId) {
-        guild = await prisma.guild.findUnique({ where: { id: guildId } });
-    }
-    else {
-        const gameGuilds = await databaseHelper.getGameGuilds(server.id);
-        guild = gameGuilds.find(guild => guild.gameId === gameId);
-    }
-
-    if (!guild) {
-        throw new Error('Game not supported in server');
-    }
-
-    // get management roles
-    const managementRoles = await prisma.userRole.findMany({ where: { OR: [
-        {
-            roleType: UserRoleType.GuildLead,
-            server: server,
-            guild: guild
-        },
-        {
-            roleType: UserRoleType.GuildManagement,
-            server: server,
-            guild: guild
-        }
-    ] } });
-
-    // find channels
-    const recruitChannel = await databaseHelper.getGameChannel(guild, ChannelPurposeType.Recruitment);
-    if (!recruitChannel) {
-        throw new Error('Recruitment channel is not set up correctly');
-    }
-    const applicantChannel = await databaseHelper.getGameChannel(guild, ChannelPurposeType.Applicant);
-    if (!applicantChannel) {
-        throw new Error('Applicant channel is not set up correctly');
-    }
-
-    // get discord channels
-    const discordServer = interaction.guild!;
-    const discordRecruitChannel = await discordServer.channels.fetch(recruitChannel.discordId);
-    if (!discordRecruitChannel || discordRecruitChannel.type !== ChannelType.GuildText) {
-        throw new Error('Recruitment channel is not set up correctly');
-    }
-    const discordApplicantChannel = await discordServer.channels.fetch(applicantChannel.discordId);
-    if (!discordApplicantChannel || discordApplicantChannel.type !== ChannelType.GuildText) {
-        throw new Error('Applicant channel is not set up correctly');
-    }
-
-    // get thread
-    const recruitThread = await getChannelThread(discordRecruitChannel, caller);
-    const applicantThread = await getChannelThread(discordApplicantChannel, caller);
-
-    // apply to guild
-    await prisma.guildApplicant.upsert({
-        create: {
-            userId: caller.id,
-            guildId: guild.id,
-            gameId: gameId,
-            serverId: server.id
-        },
-        where: {
-            userId_gameId_serverId: {
-                userId: caller.id,
-                gameId: gameId,
-                serverId: server.id
-            }
-        },
-        update: {
-            guildId: guild.id
-        }
-    });
-
-    // get guild application
-    const gameGuild = await databaseHelper.getGameGuild(guild);
-    const applicationText = await databaseHelper.getGuildApplication(server, gameGuild!, caller);
-
-    // send messages
-    const recruitChannelMessage = `<@${caller.discordId}> just applied for a guild. <#${recruitThread.id}> is their private application chat.`;
-    await discordRecruitChannel.send(recruitChannelMessage);
-    
-    let recruitThreadMessage = `${caller.name} just applied for ${guild.name}!\nAdding ${managementRoles.map(role => `<@&${role.discordId}>`).join(', ')} to the thread.\n`;
-    if (applicationText) {
-        recruitThreadMessage += `\nHere is the app sent to the applicant:\n\`\`\`${applicationText.original}\`\`\``;
-    }
-    await recruitThread.send(recruitThreadMessage);
-
-    let applicantThreadMessage = `Hi <@${caller.discordId}>!\nThank you for applying!\nWe will reach out here to talk about your application.\n`;
-    if (applicationText) {
-        applicantThreadMessage = applicationText.formatted;
-    }
-    await applicantThread.send(applicantThreadMessage);
-
-    console.log(`${caller.name} applied to ${guild.name}`);
-    await interaction.editReply(`You have successfully applied. Go to <#${applicantThread.id}> to go through your application.`);
     return true;
 }
 export = appActionCommands;
