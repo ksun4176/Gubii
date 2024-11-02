@@ -1,4 +1,4 @@
-import { AutocompleteInteraction, ChannelType, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import { AutocompleteInteraction, ChannelType, ChatInputCommandInteraction, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import { CommandInterface, CommandLevel, GetCommandInfo } from "../../CommandInterface";
 import { Prisma } from "@prisma/client";
 import { ChannelPurposeType, UserRoleType } from "../../DatabaseHelper";
@@ -35,12 +35,10 @@ const addgameCommand: CommandInterface = {
         .addChannelOption(option =>
             option.setName(options.recruitThread)
             .setDescription('thread channel to send applications for review')
-            .setRequired(true)
         )
         .addChannelOption(option =>
             option.setName(options.applicantThread)
             .setDescription('thread channel for applicants to fill out applications in')
-            .setRequired(true)
         ),
     
     async execute(interaction: ChatInputCommandInteraction) {
@@ -54,8 +52,8 @@ const addgameCommand: CommandInterface = {
         const gameId = interaction.options.getInteger(options.game)!;
         const managementRoleInfo = interaction.options.getRole(options.managementrole)!;
         const memberRoleInfo = interaction.options.getRole(options.memberrole)!;
-        const recruitChannelInfo = interaction.options.getChannel(options.recruitThread)!;
-        const applicantChannelInfo = interaction.options.getChannel(options.applicantThread)!;
+        let recruitChannelInfo = interaction.options.getChannel(options.recruitThread);
+        let applicantChannelInfo = interaction.options.getChannel(options.applicantThread);
         let errorMessage = 'There was an issue adding support for the game.\n';
         try {
             const { prisma, caller, databaseHelper } = await GetCommandInfo(interaction.user);
@@ -75,7 +73,7 @@ const addgameCommand: CommandInterface = {
 
             const gameGuild = await databaseHelper.createGameGuild(gameId, server.id);
 
-            let message = `Game '${gameGuild.game.name}' is added to the server '${server.name}'\n`;
+            let message = `Game '${gameGuild.name}' is added to the server '${server.name}'\n`;
             try {
                 const managementRole = await databaseHelper.createGuildRole(gameGuild, UserRoleType.GuildManagement, managementRoleInfo);
                 message += `- Management role: <@&${managementRole.discordId}>\n`;
@@ -93,24 +91,50 @@ const addgameCommand: CommandInterface = {
                 throw error;
             }
 
-            if (recruitChannelInfo.type !== ChannelType.GuildText) {
+            if (!recruitChannelInfo) {
+                recruitChannelInfo = await interaction.guild.channels.create({
+                    name: `${gameGuild.name} recruitment`,
+                    topic: `Recruitment channel for ${gameGuild.name}`,
+                    type: ChannelType.GuildText,
+                    permissionOverwrites: [
+                        {
+                            id: interaction.guild.roles.everyone,
+                            deny: [PermissionFlagsBits.ViewChannel],
+                        },
+                        { 
+                            id: managementRoleInfo.id,
+                            allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessagesInThreads, PermissionFlagsBits.UseApplicationCommands]
+                        }
+                    ],
+                });
+            }
+            else if (recruitChannelInfo.type !== ChannelType.GuildText) {
                 errorMessage += `- Could not add recruitment channel. It needs to be a text channel.\n`;
                 throw new Error(errorMessage);
             }
-            else {
-                const recruitThread = await databaseHelper.creatGameChannel(gameGuild, ChannelPurposeType.Recruitment, recruitChannelInfo.id);
-                message += `- Recruitment thread: <#${recruitThread!.discordId}>\n`;
-            }
+            const recruitThread = await databaseHelper.createGameChannel(gameGuild, ChannelPurposeType.Recruitment, recruitChannelInfo.id);
+            message += `- Recruitment thread: <#${recruitThread!.discordId}>\n`;
 
-            if (applicantChannelInfo.type !== ChannelType.GuildText) {
+            if (!applicantChannelInfo) {
+                applicantChannelInfo = await interaction.guild.channels.create({
+                    name: `${gameGuild.name} applicants`,
+                    topic: `Applicants channel for ${gameGuild.name}`,
+                    type: ChannelType.GuildText,
+                    permissionOverwrites: [
+                        {
+                            id: interaction.guild.roles.everyone,
+                            allow: [PermissionFlagsBits.SendMessagesInThreads],
+                        }
+                    ],
+                });
+            }
+            else if (applicantChannelInfo.type !== ChannelType.GuildText) {
                 errorMessage += `- Could not add applicant channel. It needs to be a text channel.\n`;
                 throw new Error(errorMessage);
             }
-            else {
-                const applicantChannel = await databaseHelper.creatGameChannel(gameGuild, ChannelPurposeType.Applicant, applicantChannelInfo.id);
-                message += `- Applicant thread: <#${applicantChannel!.discordId}>\n`;
-            }
-            
+            const applicantChannel = await databaseHelper.createGameChannel(gameGuild, ChannelPurposeType.Applicant, applicantChannelInfo.id);
+            message += `- Applicant thread: <#${applicantChannel!.discordId}>\n`;
+
             console.log(message);
             message += `You can now call /createguild to add guilds for this game.\n **(Recommended)** You can also call /addgametriggers to set up the application for the game`
             await interaction.editReply(message);

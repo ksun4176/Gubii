@@ -58,7 +58,7 @@ export class DatabaseHelper {
      * @param channelType type to assign
      * @returns ChannelPurpose object
      */
-    public async creatGameChannel(guild: Guild, channelType: ChannelPurposeType, channelDiscordId: string) {
+    public async createGameChannel(guild: Guild, channelType: ChannelPurposeType, channelDiscordId: string) {
         const gameGuild = await this.getGameGuild(guild);
         if (!gameGuild) {
             return null;
@@ -132,9 +132,6 @@ export class DatabaseHelper {
             },
             update: {
                 active: true,
-            },
-            include: {
-                game: true
             }
         });
     }
