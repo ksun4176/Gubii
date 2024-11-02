@@ -1,7 +1,7 @@
 import { ActionRowBuilder, AnyThreadChannel, AutocompleteInteraction, BaseGuildTextChannel, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { CommandInterface, CommandLevel, GetCommandInfo } from "../../CommandInterface";
 import { Prisma, PrismaClient, Server, User } from "@prisma/client";
-import { ChannelPurposeType, DatabaseHelper, UserRoleType } from "../../DatabaseHelper";
+import { ChannelPurposeType, DatabaseHelper, GuildEvent, UserRoleType } from "../../DatabaseHelper";
 import { applyToGuild, getGuildApplyInteractionInfo } from "../../helpers/ApplyHelper";
 
 const subcommands = {
@@ -163,8 +163,7 @@ const acceptAction = async function(
     prisma: PrismaClient,
     caller: User,
     databaseHelper: DatabaseHelper
-): Promise<boolean> {
-    const gameId = interaction.options.getInteger(options.game)!;
+) {
     const guildId = interaction.options.getInteger(options.guild)!;
 
     let user: User;
@@ -188,7 +187,7 @@ const acceptAction = async function(
         where: {
             userId_gameId_serverId: {
                 userId: user.id,
-                gameId: gameId,
+                gameId: guild.gameId,
                 serverId: server.id
             }
         }
@@ -213,7 +212,7 @@ const acceptAction = async function(
     // check if roles are new and need to be added
     const guildRole = await databaseHelper.getGuildRole(guild, UserRoleType.GuildMember);
     if (guildRole?.discordId && !discordUser.roles.cache.has(guildRole.discordId)) {
-        discordUser.roles.add(guildRole.discordId);
+        await discordUser.roles.add(guildRole.discordId);
     }
     if (application) {
         await prisma.guildApplicant.delete({ where: { id: application.id } });
@@ -243,6 +242,7 @@ const acceptAction = async function(
         include: { guild: true }
     });
     currentGuilds = currentGuilds.filter(role => discordUser.roles.cache.has(role.discordId!)); // check that the user is in these guilds
+    let transferred = false;
     if (currentGuilds.length > 0) {
         if (interaction.channel && interaction.channel instanceof BaseGuildTextChannel) {
             let followUpMessage = `Is this a guild transfer? If so, we will remove these old guild roles:\n`;
@@ -278,8 +278,9 @@ const acceptAction = async function(
                     await confirmation.update({ content: 'OK, user now belongs to multiple guilds.', components: [] });
                 }
                 else if (confirmation.customId === buttons.yesRemove) {
-                    discordUser.roles.remove(currentGuilds.map(role => role.discordId!));
+                    await discordUser.roles.remove(currentGuilds.map(role => role.discordId!));
                     await confirmation.update({ content: 'Old guild roles have been removed.', components: [] })
+                    transferred = true;
                 }
             } 
             catch (error) {
@@ -292,6 +293,21 @@ const acceptAction = async function(
                 message += `- <@&${role.discordId}> for '${role.guild!.name}'\n`;
             }
             await interaction.editReply(message);
+        }
+    }
+    const gameGuild = await databaseHelper.getGameGuild(guild);
+    const savedMessage = await prisma.guildMessage.findUniqueOrThrow({ where: {
+        serverId_guildId_eventId: {
+            serverId: server.id,
+            guildId: gameGuild!.id,
+            eventId: transferred ? GuildEvent.Transfer : GuildEvent.Accept
+        }
+    }});
+    if (savedMessage?.channelId) {
+        const discordChannel = await discordServer.channels.fetch(savedMessage.channelId);
+        if (discordChannel?.isSendable()) {
+            const messageInfo = await databaseHelper.replaceMessagePlaceholders(savedMessage.text, user, server, guild);
+            await discordChannel.send(messageInfo.formatted);
         }
     }
     return true;

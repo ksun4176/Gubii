@@ -136,7 +136,7 @@ const kickGuildCommand: CommandInterface = {
                         await interaction.editReply({ content: 'You do not have permission to run this command', components: [] });
                         return;
                     }
-                    discordUser.roles.remove(guildsToKick.map(role => role.discordId!));
+                    await discordUser.roles.remove(guildsToKick.map(role => role.discordId!));
         
                     let message = `'${user.name}' was removed from these guilds:\n`;
                     for (let role of guildsToKick) {

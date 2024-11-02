@@ -372,10 +372,10 @@ export class DatabaseHelper {
             }
         }
         if (guild) {
-            formattedText = formattedText.replace(/\<\{guildName\}\>/g, `<@${guild.name}>`);
+            formattedText = formattedText.replace(/\<\{guildName\}\>/g, `${guild.name + (guild.guildId === '' ? ' Guild' : '')}`);
             
             const game = await this.__prisma.game.findUnique({ where: { id: guild.gameId } });
-            formattedText = formattedText.replace(/\<\{gameName\}\>/g, `<@${game!.name}>`);
+            formattedText = formattedText.replace(/\<\{gameName\}\>/g, `${game!.name}`);
 
             const guildRoles = await this.__prisma.userRole.findMany({ where: { OR: [
                 {
@@ -393,14 +393,14 @@ export class DatabaseHelper {
             formattedText = formattedText.replace(/\<\{guildMembers\}\>/g, guildRoles.filter(role => role.roleType === UserRoleType.GuildMember).map(role => `<@&${role.discordId}>`).join(' '));
         }
 
-        const applyButton = formattedText.indexOf('[|apply|]') >= 0;
-        if (applyButton) {
+        const addApply = formattedText.indexOf('[|apply|]') >= 0;
+        if (addApply) {
             formattedText = formattedText.replace(/\[\|apply\|\]/g, ``);
         }
 
         return {
             formatted: formattedText,
-            apply: applyButton
+            apply: addApply
         }
     }
     //#endregion String formatting

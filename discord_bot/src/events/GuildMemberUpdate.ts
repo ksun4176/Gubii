@@ -103,7 +103,7 @@ const updateSharedRoles = async (member: GuildMember) => {
         }
     }
     if (rolesToAdd.length > 0) {
-        member.roles.add(rolesToAdd);
+        await member.roles.add(rolesToAdd);
         console.log(`User ${user.name} added these roles: ${rolesToAdd}`);
     }
     const rolesToRemove: string[] = [];
@@ -113,7 +113,7 @@ const updateSharedRoles = async (member: GuildMember) => {
         }
     }
     if (rolesToRemove.length > 0) {
-        member.roles.remove(rolesToRemove);
+        await member.roles.remove(rolesToRemove);
         console.log(`User ${user.name} removed these roles: ${rolesToRemove}`);
     }
 }

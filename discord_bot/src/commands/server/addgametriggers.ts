@@ -135,7 +135,15 @@ const addGameTriggersCommand: CommandInterface = {
                         message += `${applicationText!.formatted}\n`;
                         break;
                     default:
-                        message += `${guildMessageText}\n`
+                        const savedMessage = await prisma.guildMessage.findUniqueOrThrow({ where: {
+                            serverId_guildId_eventId: {
+                                serverId: server.id,
+                                guildId: gameGuild.id,
+                                eventId: eventId
+                            }
+                        }});
+                        const messageInfo = await databaseHelper.replaceMessagePlaceholders(savedMessage.text, caller, server, gameGuild);
+                        message += `${messageInfo.formatted}\n`;
                         break;
                 }
                 if (channelInfo) {
