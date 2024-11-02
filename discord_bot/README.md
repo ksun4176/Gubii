@@ -1,12 +1,25 @@
-# GuildBuild_Discord
-A bot to create their community structure straight within Discord.
+# Gubii
+A discord bot used to handle guild management.
+This handles everything from welcoming people to your server to guild applications to assigning out guild roles.
 
-## How to Use
-### Set up your Discord server (Only Server Owner)
-1. Add bot to server
-   - Go to https://discord.com/oauth2/authorize?client_id=1246175342918635530
-   - Select your server
-   - Press Authorize
+## Table of Contents
+- [Set up Discord Server](#set-up-discord-server)
+- [Add Guilds](#add-guilds)
+- [Go through Guild Applications](#go-through-guild-applications)
+- [Other Guild Actions](#other-guild-actions)
+   - [Transferring Guild Members](#transferring-members)
+   - [Kicking Members](#kicking-members)
+- [Apply to a Guild](#apply-to-a-guild)
+- [Premium Functionality](#premium-functionality)
+   - [/addservertriggers](#addservertriggers)
+   - [/addgametriggers](#addgametriggers)
+- [FAQs](#faqs)
+- [File Structure](#file-structure)
+- [Contributing](#contributing)
+
+## Set up Discord Server
+Can only be done by Server Owner
+1. Add bot to server at [Gubii Authorization](https://discord.com/oauth2/authorize?client_id=1246175342918635530).
 2. **<u>Important</u>** In Server Settings > Roles, move up the Gubii role to the top of the list. This allows it to assign out roles correctly.
 3. Run `/setupserver`
    - (Optional) Add server admin role to give other users permission to manage the server
@@ -14,7 +27,8 @@ A bot to create their community structure straight within Discord.
 4. Assign out the admin role now so they can also run following commands
 5. **(Premium Only)** Add a welcome message for when people join the server. Read more about this in the **<u>Premium Functionality</u>** section
 
-### Set up guilds (Only Server Owner + Admins)
+## Add Guilds
+ Can only be done by Server Owner + Admins
 1. Run `/addgame` to let us know what games you are playing
    - If you do not see the game you're playing, go to https://discord.gg/UEWzKAu3 and any admin there can help you
    - Add shared roles to more easily mention the whole group of people
@@ -25,8 +39,10 @@ A bot to create their community structure straight within Discord.
    3. Paste in your application questions
 4. Assign out the guild management role out for each guild
 5. **(Recommended)** Assign out the server admin role to your guild leads
+6. **(Premium Only)** Add a welcome message for when people get accepted. Read more about this in the **<u>Premium Functionality</u>** section
 
-### Go through guild applications (Guild Management)
+## Go through Guild Applications
+Can only be done by Guild Management
 - When a user applies to a guild, an application thread will be spawned
 - **<u>Not all messages will be sent to the applicant.</u>** This is so all of management can discuss the application here amongst themselves
 1. To send a message to the applicant, prefix your message with `\`
@@ -34,15 +50,19 @@ A bot to create their community structure straight within Discord.
 2. To accept an application, run `/application accept`
 3. To decline an application, run `/application decline`
 
-### Transfer member to another guild (Guild Management)
+## Other Guild Actions
+### Transferring Members
+Can only be done by Guild Management
 1. Run `/application accept` to transfer user to new guild
    - You will then be prompted to remove old guild roles for a full transfer
 
-### Kick member (Guild Management)
+### Kicking Members
+Can only be done by Guild Management
 1. Run `/kickguild` to kick a user from guilds
    - You can specify just a single guild if needed
 
-### Apply to a guild (Anyone)
+## Apply to a Guild
+Can be done by anyone
 1. Run `/application apply`
    - You can specify a guild to apply to directly
 
