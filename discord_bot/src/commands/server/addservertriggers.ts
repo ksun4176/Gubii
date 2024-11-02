@@ -1,7 +1,7 @@
 import { AutocompleteInteraction, ChannelType, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { CommandInterface, CommandLevel, GetCommandInfo } from "../../CommandInterface";
 import { Prisma } from "@prisma/client";
-import { UserRoleType } from "../../DatabaseHelper";
+import { ServerEvent, UserRoleType } from "../../DatabaseHelper";
 
 const options = {
     event: 'event',
@@ -110,7 +110,7 @@ const addServerTriggersCommand: CommandInterface = {
                 message = `**Here is the now saved text:**\n`;
                 const messageInfo = await databaseHelper.replaceMessagePlaceholders(savedMessage.text, caller, server);
                 message += `${messageInfo.formatted}\n`;
-                if (messageInfo.apply) {
+                if (eventId === ServerEvent.ServerMemberAdd && messageInfo.apply) {
                     message += `__The Apply button will be added to the bottom of the message as well__\n`;
                 }
                 message += `\n**Text will be sent to <#${channelInfo.id}> on event trigger.**\n`;

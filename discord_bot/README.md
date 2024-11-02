@@ -2,48 +2,79 @@
 A bot to create their community structure straight within Discord.
 
 ## How to Use
-### Set up Server and Guilds (can be ran by server owner + admins)
-1. Server owner: Add bot to server
+### Set up your Discord server (Only Server Owner)
+1. Add bot to server
    - Go to https://discord.com/oauth2/authorize?client_id=1246175342918635530
    - Select your server
    - Press Authorize
-2. Server owner: Run ```/setupserver```
+2. Run `/setupserver`
    - (Optional) Add server admin role to give other users permission to manage the server
-   - (Optional) Add bot log channel to log everything the bot does in your server.
-3. Run ```/addgame``` to let us know what games you are playing
-   - If you do not see the game you're playing, go to https://discord.gg/UEWzKAu3 and any admin can help you add it in
+   - (Optional) Add bot log channel to log everything the bot does in your server
+3. Assign out the admin role now so they can also run following commands
+4. **(Premium Only)** Add a welcome message for when people join the server. Read more about this in the **<u>Premium Functionality</u>** section
+
+### Set up guilds (Only Server Owner + Admins)
+1. Run `/addgame` to let us know what games you are playing
+   - If you do not see the game you're playing, go to https://discord.gg/UEWzKAu3 and any admin there can help you
    - Add shared roles to more easily mention the whole group of people
-   - Add channels where we can spawn threads to handle application process
-4. Run ```/createguild``` for each guild
-5. **(Recommended)** Run ```/addgametriggers``` to set up the application you want for the game
+2. Run `/createguild` for each guild
+3. **(Recommended)** Add an application for the game
+   1. Draft up your application questions
+   2. Run `/addgametriggers event:Apply`
+   3. Paste in your application questions
+4. Assign out the guild management role out for each guild
+5. **(Recommended)** Assign out the server admin role to your guild leads
 
-### User Management (can be ran by server owner + admins + guild management)
-1. Add server admin and guild management role to the right people to give them permission to run respective commands
-2. Anyone: Run ```/application apply``` to apply for any guild
-   - (Optional) Specify a guild to apply to directly
-3. **Application threads will be spawned in specified channels**
-   - Messages will be automatically reacted with ✅ or ❌ to let you know if they were successful
-   - **<u>NOTE</u>**: Recruiter messages will only send if prefixed with '\\'. This is so management can talk amongst themselves in the same thread.
-4. To handle an application, you can:
-   - Run ```/application accept``` to accept a user into a guild
-   - Admin: Run ```/application decline``` to decline user from ALL guilds
-5. Run ```/application accept``` to transfer user to new guild
-   - You will then be prompted to remove old guild roles which is equivalent to a transfer
-6. Run ```/kickguild``` to kick a user from guilds
-   - (Optional) Specify a single guild to kick the user from
+### Go through guild applications (Guild Management)
+- When a user applies to a guild, an application thread will be spawned
+- **<u>Not all messages will be sent to the applicant.</u>** This is so all of management can discuss the application here amongst themselves
+1. To send a message to the applicant, prefix your message with `\`
+   - Messages will be reacted with ✅ or ❌ to let you know if they were sent
+2. To accept an application, run `/application accept`
+3. To decline an application, run `/application decline`
 
-## Premium Servers
-1. Go to https://discord.gg/UEWzKAu3 and any admin can help add you as a premium server
-2. We will then have to redeploy the commands so that your server gets all the new functionality
-/addservertriggers
-<{user}>
-<{serverName}>
-<{serverAdmin}>
-<{gameName}>
-<{guildName}>
-<{guildManagement}>
-<{guildMembers}>
-[|apply|]
+### Transfer member to another guild (Guild Management)
+1. Run `/application accept` to transfer user to new guild
+   - You will then be prompted to remove old guild roles for a full transfer
+
+### Kick member (Guild Management)
+1. Run `/kickguild` to kick a user from guilds
+   - You can specify just a single guild if needed
+
+### Apply to a guild (Anyone)
+1. Run `/application apply`
+   - You can specify a guild to apply to directly
+
+## Premium Functionality
+1. To become a premium server, go to https://discord.gg/UEWzKAu3 and talk to any admin
+   1. Run `/addpremiumserver`
+   2. Redeploy the commands so that the server gets all the new functionality
+
+### `/addservertriggers`
+
+- **<u>Add a welcome message for when people join the server</u>**
+   - <u>Placeholders</u>
+      - `<{user}>` : New member's discord tag
+      - `<{serverName}>` : Name of server
+      - `<{serverAdmin}>` : Server admin role
+      - `[|apply|]` : Add the 'Apply to Guilds' button
+   1. Draft up a welcome message (use the placeholders specified above)
+   2. Run command with `event:ServerMemberAdd` and which channel to post message in
+   3. Paste in your welcome message
+
+### `/addgametriggers`
+- **<u>Add a message for when people get accepted to a guild or transfer to another one</u>**
+   - <u>Placeholders</u>
+      - `<{user}>` : New member's discord tag
+      - `<{serverName}>` : Name of server
+      - `<{serverAdmin}>` : Server admin role
+      - `<{gameName}>` : Name of game
+      - `<{guildName}>` : Name of guild
+      - `<{guildManagement}>` : Guild management role
+      - `<{guildMembers}>` : Guild member role
+   1. Draft up the welcome message (use the placeholders specified above)
+   2. Run command with `event:Accept/Transfer` and which channel to post message in
+   3. Paste in your welcome message
 
 ## FAQs
 
@@ -53,6 +84,7 @@ All development files can be found in `src/`. All other folders are auto generat
 
 - ./app.ts: Entrypoint of our bot
 - ./*[Interface/Helper].ts: General set up functions and typings
+- ./buttons/*: All of our button interactions
 - ./commands/*: All of our commands (NOTE: our code look at all commands in this directory and subdirectory level deeper)
 - ./events/*: All of our events (NOTE: our code looks at all events at this level only)
 
