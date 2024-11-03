@@ -2,6 +2,7 @@ import { AutocompleteInteraction, ChatInputCommandInteraction, SlashCommandBuild
 import { CommandInterface, CommandLevel, GetCommandInfo } from "../../CommandInterface";
 import { Prisma } from "@prisma/client";
 import { UserRoleType } from "../../DatabaseHelper";
+import { DeployPremiumCommands } from "../../deployCommands";
 
 const options = {
     server: 'server',
@@ -60,6 +61,8 @@ const addPremiumServerCommand: CommandInterface = {
                     isPremium: enable
                 }
             });
+
+            await DeployPremiumCommands(serverUpdated.discordId!, serverUpdated.isPremium ? undefined : []);
 
             let message = `Server '${serverUpdated.name}' is  ${serverUpdated.isPremium ? 'enabled' : 'disabled'} \n`;
             console.log(message);
