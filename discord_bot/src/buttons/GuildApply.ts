@@ -72,7 +72,7 @@ const GuildApplyButton: ButtonInterface = {
         catch (error) {
             console.error(error);
             await interaction.followUp({
-                content: `Hi <@${interaction.user.id}>. There was an issue applying. Try again later.`,
+                content: `Hi ${interaction.user}. There was an issue applying. Try again later.`,
                 ephemeral: true   
             });
         }

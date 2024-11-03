@@ -98,7 +98,7 @@ export const applyToGuild = async (
     const applicationText = await databaseHelper.getGuildApplication(server, gameGuild!, caller);
 
     // send messages
-    const recruitChannelMessage = `<@${caller.discordId}> just applied for a guild. <#${recruitThread.id}> is their private application chat.`;
+    const recruitChannelMessage = `<@${caller.discordId}> just applied for a guild. ${recruitThread} is their private application chat.`;
     await discordRecruitChannel.send(recruitChannelMessage);
     
     let recruitThreadMessage = `${caller.name} just applied for ${guild.name}!\nAdding <@&${managementRole.discordId}> to the thread.\n`;
@@ -127,7 +127,7 @@ export const applyToGuild = async (
  * @returns See getGuildApplyChannelInfo
  */
 export const getGuildApplyMessageInfo = async (prisma: PrismaClient, databaseHelper: DatabaseHelper, message: Message | PartialMessage) => {
-    if (!message.inGuild() || message.author.bot) {
+    if (!message.inGuild()) {
         return null;
     }
     return await getGuildApplyChannelInfo(prisma, databaseHelper, message);

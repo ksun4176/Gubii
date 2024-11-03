@@ -90,7 +90,7 @@ const appActionCommands: CommandInterface = {
                     const gameId = interaction.options.getInteger(options.game)!;
                     const guildId = interaction.options.getInteger(options.guild) ?? undefined;
                     const applicantThread = await applyToGuild(interaction, server, prisma, caller, databaseHelper, guildId, gameId);
-                    await interaction.editReply(`You have successfully applied. Go to <#${applicantThread.id}> to go through your application.`);
+                    await interaction.editReply(`You have successfully applied. Go to ${applicantThread} to go through your application.`);
                     break;
                 default:
                     await interaction.editReply('No action done');

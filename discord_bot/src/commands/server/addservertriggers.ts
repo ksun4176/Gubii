@@ -113,7 +113,7 @@ const addServerTriggersCommand: CommandInterface = {
                 if (eventId === ServerEvent.ServerMemberAdd && messageInfo.apply) {
                     message += `__The Apply button will be added to the bottom of the message as well__\n`;
                 }
-                message += `\n**Text will be sent to <#${channelInfo.id}> on event trigger.**\n`;
+                message += `\n**Text will be sent to ${channelInfo} on event trigger.**\n`;
                 console.log(message);
                 await interaction.followUp(message);
                 await databaseHelper.writeToLogChannel(serverInfo, server.id, message);

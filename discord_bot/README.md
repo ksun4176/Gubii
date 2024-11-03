@@ -47,9 +47,9 @@ Can only be done by Server Owner + Admins
 ## Go through Guild Applications
 Can only be done by Guild Management
 - When a user applies to a guild, an application thread will be spawned
-- **<u>Not all messages will be sent to the applicant.</u>** This is so all of management can discuss the application here amongst themselves
-1. To send a message to the applicant, prefix your message with `\`
+1. To send a message to the applicant, <u>you must mention @Gubii in the message</u>.
    - Messages will be reacted with ✅ or ❌ to let you know if they were sent
+   - This is so all of management can discuss the application here amongst themselves.
 2. To accept an application, run `/application accept`
 3. To decline an application, run `/application decline`
 
@@ -68,6 +68,9 @@ Can only be done by Guild Management
 Can be done by anyone
 1. Run `/application apply`
    - You can specify a guild to apply to directly
+2. An application thread will be spawned
+3. To send a message to the recruiter, <u>you must mention @Gubii in the message</u>.
+   - Messages will be reacted with ✅ or ❌ to let you know if they were sent
 
 ## Premium Functionality
 1. To become a premium server, go to https://discord.gg/UEWzKAu3 and talk to any admin
