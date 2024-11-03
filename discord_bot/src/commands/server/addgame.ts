@@ -7,15 +7,14 @@ const options = {
     game: 'game',
     managementrole: 'managementrole',
     memberrole: 'memberrole',
-    recruitThread: 'recruitthread',
-    applicantThread: 'applicantthread'
+    channelscategory: 'channelscategory',
 }
 
 const addgameCommand: CommandInterface = {
     level: CommandLevel.All,
     data: new SlashCommandBuilder()
         .setName('addgame')
-        .setDescription('Add a game to the server')
+        .setDescription('Add a game to the server. This will create the recruitment and applicant thread channels')
         .addIntegerOption(option => 
             option.setName(options.game)
                 .setDescription('game to add to server')
@@ -33,12 +32,8 @@ const addgameCommand: CommandInterface = {
             .setRequired(true)
         )
         .addChannelOption(option =>
-            option.setName(options.recruitThread)
-            .setDescription('thread channel to send applications for review')
-        )
-        .addChannelOption(option =>
-            option.setName(options.applicantThread)
-            .setDescription('thread channel for applicants to fill out applications in')
+            option.setName(options.channelscategory)
+            .setDescription('category to create recruitment and applicant thread channels in')
         ),
     
     async execute(interaction: ChatInputCommandInteraction) {
@@ -52,8 +47,7 @@ const addgameCommand: CommandInterface = {
         const gameId = interaction.options.getInteger(options.game)!;
         const managementRoleInfo = interaction.options.getRole(options.managementrole)!;
         const memberRoleInfo = interaction.options.getRole(options.memberrole)!;
-        let recruitChannelInfo = interaction.options.getChannel(options.recruitThread);
-        let applicantChannelInfo = interaction.options.getChannel(options.applicantThread);
+        const channelsCategoryInfo = interaction.options.getChannel(options.channelscategory);
         let errorMessage = 'There was an issue adding support for the game.\n';
         try {
             const { prisma, caller, databaseHelper } = await GetCommandInfo(interaction.user);
@@ -91,47 +85,42 @@ const addgameCommand: CommandInterface = {
                 throw error;
             }
 
-            if (!recruitChannelInfo) {
-                recruitChannelInfo = await interaction.guild.channels.create({
-                    name: `${gameGuild.name} recruitment`,
-                    topic: `Recruitment channel for ${gameGuild.name}`,
-                    type: ChannelType.GuildText,
-                    permissionOverwrites: [
-                        {
-                            id: interaction.guild.roles.everyone,
-                            deny: [PermissionFlagsBits.ViewChannel],
-                        },
-                        { 
-                            id: managementRoleInfo.id,
-                            allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessagesInThreads, PermissionFlagsBits.UseApplicationCommands]
-                        }
-                    ],
-                });
-            }
-            else if (recruitChannelInfo.type !== ChannelType.GuildText) {
-                errorMessage += `- Could not add recruitment channel. It needs to be a text channel.\n`;
+            if (channelsCategoryInfo && channelsCategoryInfo?.type !== ChannelType.GuildCategory) {
+                errorMessage += `- channelscategory needs to be a Category.\n`;
                 throw new Error(errorMessage);
             }
+
+            const recruitChannelInfo = await interaction.guild.channels.create({
+                name: `${gameGuild.name} recruitment`,
+                topic: `Recruitment channel for ${gameGuild.name}`,
+                type: ChannelType.GuildText,
+                parent: channelsCategoryInfo?.id,
+                permissionOverwrites: [
+                    {
+                        id: interaction.guild.roles.everyone,
+                        deny: [PermissionFlagsBits.ViewChannel],
+                    },
+                    { 
+                        id: managementRoleInfo.id,
+                        allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessagesInThreads, PermissionFlagsBits.UseApplicationCommands]
+                    }
+                ],
+            });
             const recruitThread = await databaseHelper.createGameChannel(gameGuild, ChannelPurposeType.Recruitment, recruitChannelInfo.id);
             message += `- Recruitment thread: <#${recruitThread!.discordId}>\n`;
 
-            if (!applicantChannelInfo) {
-                applicantChannelInfo = await interaction.guild.channels.create({
-                    name: `${gameGuild.name} applicants`,
-                    topic: `Applicants channel for ${gameGuild.name}`,
-                    type: ChannelType.GuildText,
-                    permissionOverwrites: [
-                        {
-                            id: interaction.guild.roles.everyone,
-                            allow: [PermissionFlagsBits.SendMessagesInThreads],
-                        }
-                    ],
-                });
-            }
-            else if (applicantChannelInfo.type !== ChannelType.GuildText) {
-                errorMessage += `- Could not add applicant channel. It needs to be a text channel.\n`;
-                throw new Error(errorMessage);
-            }
+            const applicantChannelInfo = await interaction.guild.channels.create({
+                name: `${gameGuild.name} applicants`,
+                topic: `Applicants channel for ${gameGuild.name}`,
+                type: ChannelType.GuildText,
+                parent: channelsCategoryInfo?.id,
+                permissionOverwrites: [
+                    {
+                        id: interaction.guild.roles.everyone,
+                        allow: [PermissionFlagsBits.SendMessagesInThreads],
+                    }
+                ],
+            });
             const applicantChannel = await databaseHelper.createGameChannel(gameGuild, ChannelPurposeType.Applicant, applicantChannelInfo.id);
             message += `- Applicant thread: <#${applicantChannel!.discordId}>\n`;
 

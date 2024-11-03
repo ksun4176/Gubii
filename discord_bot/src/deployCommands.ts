@@ -40,12 +40,17 @@ const DeployCommands = async () => {
 		);
 		console.log(`Successfully reloaded ${(appData as any[]).length} application (/) commands.`);
 
-		console.log(`Started refreshing ${ownerCommands.length} owner (/) commands.`);
-		const ownerData = await rest.put(
-			Routes.applicationGuildCommands(process.env.CLIENT_ID!, process.env.OWNER_SERVER_ID!),
-			{ body: ownerCommands }
-		);
-		console.log(`Successfully reloaded ${(ownerData as any[]).length} owner (/) commands.`);
+		try {
+			console.log(`Started refreshing ${ownerCommands.length} owner (/) commands.`);
+			const ownerData = await rest.put(
+				Routes.applicationGuildCommands(process.env.CLIENT_ID!, process.env.OWNER_SERVER_ID!),
+				{ body: ownerCommands }
+			);
+			console.log(`Successfully reloaded ${(ownerData as any[]).length} owner (/) commands.`);
+		}
+		catch (error) {
+			console.error(error);
+		}
 
 		if (premiumCommands.length > 0) {
 			const connection = createConnection({
@@ -65,14 +70,19 @@ const DeployCommands = async () => {
 					}
 					console.log(`Started refreshing ${premiumCommands.length} premium (/) commands.`);
 					for (const server of result) {
-						if (!server.discord_id || server.discord_id === process.env.OWNER_SERVER_ID) {
-							continue;
+						try {
+							if (!server.discord_id || server.discord_id === process.env.OWNER_SERVER_ID) {
+								continue;
+							}
+							const premData = await rest.put(
+								Routes.applicationGuildCommands(process.env.CLIENT_ID!, server.discord_id),
+								{ body: premiumCommands }
+							);
+							console.log(`Successfully reloaded ${(premData as any[]).length} premium (/) commands in ${server.discord_id}.`);
 						}
-						const premData = await rest.put(
-							Routes.applicationGuildCommands(process.env.CLIENT_ID!, server.discord_id),
-							{ body: premiumCommands }
-						);
-						console.log(`Successfully reloaded ${(premData as any[]).length} premium (/) commands in ${server.discord_id}.`);
+						catch (error) {
+							console.error(error);
+						}
 					}
 				});
 				connection.end();

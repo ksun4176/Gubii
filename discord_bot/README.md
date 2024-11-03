@@ -28,18 +28,21 @@ Can only be done by Server Owner
 5. **(Premium Only)** Add a welcome message for when people join the server. Read more about this in the **<u>Premium Functionality</u>** section
 
 ## Add Guilds
- Can only be done by Server Owner + Admins
-1. Run `/addgame` to let us know what games you are playing
-   - If you do not see the game you're playing, go to https://discord.gg/UEWzKAu3 and any admin there can help you
-   - Add shared roles to more easily mention the whole group of people
-2. Run `/createguild` for each guild
-3. **(Recommended)** Add an application for the game
+Can only be done by Server Owner + Admins
+1. Create a management role + member role for the game to be SHARED across all guilds (e.g. {Game Name} Management)
+2. Run `/addgame` to let us know which games you are playing
+   - This will create a recruitment thread channel (applications for management to review) and an applicant thread channel (applications for applicants to fill out)
+   - (Optional) You can specify a channel category to put these new channels in.
+   - If you do not see an option for the game you're playing, go to https://discord.gg/UEWzKAu3 and any admin there can help you
+3. Create a management role + member role for the single guild specifically (e.g., {Guild Name} Member)
+4. Run `/createguild` for each guild
+5. **(Recommended)** Add an application for the game
    1. Draft up your application questions
    2. Run `/addgametriggers event:Apply`
    3. Paste in your application questions
-4. Assign out the guild management role out for each guild
-5. **(Recommended)** Assign out the server admin role to your guild leads
-6. **(Premium Only)** Add a welcome message for when people get accepted. Read more about this in the **<u>Premium Functionality</u>** section
+6. Assign out the guild management role out for each guild
+7. **(Recommended)** Assign out the server admin role to your guild leads
+8. **(Premium Only)** Add a welcome message for when people get accepted. Read more about this in the **<u>Premium Functionality</u>** section
 
 ## Go through Guild Applications
 Can only be done by Guild Management
