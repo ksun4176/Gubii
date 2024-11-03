@@ -23,6 +23,7 @@ const addServerTriggersCommand: CommandInterface = {
             option.setName(options.channel)
                 .setDescription('channel text should go to')
                 .setRequired(true)
+                .addChannelTypes(ChannelType.GuildText)
         ),
     
     async execute(interaction: ChatInputCommandInteraction) {
@@ -49,11 +50,6 @@ const addServerTriggersCommand: CommandInterface = {
             if (!hasPermission) {
                 interaction.editReply('You do not have permission to run this command');
                 return;
-            }
-
-            if (channelInfo.type !== ChannelType.GuildText) {
-                errorMessage += `- Could not add channel. It needs to be a text channel.\n`;
-                throw new Error(errorMessage);
             }
 
             let message = '';

@@ -19,6 +19,7 @@ const setupserverCommand: CommandInterface = {
         .addChannelOption(option =>
             option.setName(options.logChannel)
                 .setDescription('channel to log actions of the bot')
+                .addChannelTypes(ChannelType.GuildText)
         ),
     
     async execute(interaction: ChatInputCommandInteraction) {
@@ -120,11 +121,7 @@ const setupserverCommand: CommandInterface = {
                 }
             });
             if (logChannelInfo) {
-                if (logChannelInfo.type !== ChannelType.GuildText) {
-                    errorMessage += `- Could not add log channel. It needs to be a text channel.\n`;
-                    throw new Error(errorMessage);
-                }
-                else if (logChannel) {
+                if (logChannel) {
                     logChannel = await prisma.channelPurpose.update({
                         where: { id: logChannel.id },
                         data: { 

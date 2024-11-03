@@ -29,6 +29,7 @@ const addGameTriggersCommand: CommandInterface = {
         .addChannelOption(option =>
             option.setName(options.channel)
                 .setDescription('channel text should go to')
+                .addChannelTypes(ChannelType.GuildText)
         ),
     
     async execute(interaction: ChatInputCommandInteraction) {
@@ -59,20 +60,13 @@ const addGameTriggersCommand: CommandInterface = {
             }
 
             let needChannel = requireChannel(eventId);
-            if (needChannel) {
-                if (!channelInfo) {
-                    errorMessage += 'You need to provide a channel for the message to be sent to';
-
-                }
-                else if (channelInfo.type !== ChannelType.GuildText) {
-                    errorMessage += `- Could not add channel. It needs to be a text channel.\n`;
-                    throw new Error(errorMessage);
-                }
-            }
-            else {
+            if (!needChannel) {
                 channelInfo = null;
             }
-
+            else if (!channelInfo) {
+                errorMessage += 'You need to provide a channel for the message to be sent to';
+                throw new Error(errorMessage);
+            }
 
             let message = '';
             let gameGuild = await prisma.guild.findUniqueOrThrow({ where: { id: gameGuildId } });

@@ -34,6 +34,7 @@ const addgameCommand: CommandInterface = {
         .addChannelOption(option =>
             option.setName(options.channelscategory)
             .setDescription('category to create recruitment and applicant thread channels in')
+            .addChannelTypes(ChannelType.GuildCategory)
         ),
     
     async execute(interaction: ChatInputCommandInteraction) {
@@ -83,11 +84,6 @@ const addgameCommand: CommandInterface = {
             catch (error) {
                 errorMessage += `- Could not add member role. Has this role already been used?\n`;
                 throw error;
-            }
-
-            if (channelsCategoryInfo && channelsCategoryInfo?.type !== ChannelType.GuildCategory) {
-                errorMessage += `- channelscategory needs to be a Category.\n`;
-                throw new Error(errorMessage);
             }
 
             const recruitChannelInfo = await interaction.guild.channels.create({

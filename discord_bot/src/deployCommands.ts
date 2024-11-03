@@ -6,30 +6,26 @@ import { createConnection, MysqlError } from 'mysql';
 
 dotenv.config();
 
-// Get all commands that need to be registered
-const applicationCommands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
-const premiumCommands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
-const ownerCommands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
-const commandCallbackFn = (command: CommandInterface) => {
-	switch (command.level) {
-		case CommandLevel.Owner:
-			ownerCommands.push(command.data.toJSON());
-			break;
-		case CommandLevel.Premium:
-			premiumCommands.push(command.data.toJSON());
-			ownerCommands.push(command.data.toJSON());
-			break;
-		default:
-			applicationCommands.push(command.data.toJSON());
-			break;
+export const DeployCommands = async () => {
+	const applicationCommands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
+	const premiumCommands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
+	const ownerCommands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
+	const addCommandsToRegister = (command: CommandInterface) => {
+		switch (command.level) {
+			case CommandLevel.Owner:
+				ownerCommands.push(command.data.toJSON());
+				break;
+			case CommandLevel.Premium:
+				premiumCommands.push(command.data.toJSON());
+				ownerCommands.push(command.data.toJSON());
+				break;
+			default:
+				applicationCommands.push(command.data.toJSON());
+				break;
+		}
 	}
-}
-executeOnAllCommands(commandCallbackFn);
-
-/**
- * Deploy the commands for the application
- */
-const DeployCommands = async () => {
+	executeOnAllCommands(addCommandsToRegister);
+	
 	try {
 		const rest = new REST().setToken(process.env.CLIENT_TOKEN!);
 
