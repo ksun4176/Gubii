@@ -1,8 +1,8 @@
 import { Events, Message, OmitPartialGroupDMChannel, PartialMessage } from "discord.js";
 import { BaseEvent } from '../../utils/structures/BaseEvent';
-import { getGuildApplyMessageInfo } from "../../utils/helpers/ApplyHelper";
-import { ChannelPurposeType } from "../../utils/helpers/DatabaseHelper";
-import { findForwardedMessage } from "../../utils/helpers/MessageHelper";
+import { getGuildApplyMessageInfo } from "../../helpers/ApplyHelper";
+import { ChannelPurposeType } from "../../helpers/DatabaseHelper";
+import { findForwardedMessage } from "../../helpers/MessageHelper";
 
 export default class MessageDeleteEvent extends BaseEvent<Events.MessageDelete> {
   constructor() {

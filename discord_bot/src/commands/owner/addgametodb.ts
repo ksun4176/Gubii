@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { BaseChatInputCommand, CommandLevel } from '../../utils/structures/BaseChatInputCommand';
 import { Prisma } from "@prisma/client";
-import { UserRoleType } from "../../utils/helpers/DatabaseHelper";
+import { UserRoleType } from "../../helpers/DatabaseHelper";
 
 const options = {
   name: 'name',

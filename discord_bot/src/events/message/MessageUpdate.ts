@@ -1,7 +1,7 @@
 import { EmbedBuilder, Events, Message, PartialMessage } from "discord.js";
 import { BaseEvent } from '../../utils/structures/BaseEvent';
-import { getGuildApplyMessageInfo } from "../../utils/helpers/ApplyHelper";
-import { findForwardedMessage, forwardNewMessage } from "../../utils/helpers/MessageHelper";
+import { getGuildApplyMessageInfo } from "../../helpers/ApplyHelper";
+import { findForwardedMessage, forwardNewMessage } from "../../helpers/MessageHelper";
 
 export default class MessageUpdateEvent extends BaseEvent<Events.MessageUpdate> {
   constructor() {

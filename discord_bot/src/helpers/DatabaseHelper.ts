@@ -34,6 +34,26 @@ export class DatabaseHelper {
 
   //#region Server Helpers
   /**
+   * Create a server object
+   * @param server Discord Server information
+   * @returns The created DB server object
+   */
+  public async createServer(server: DiscordServer) {
+    return await this.__prisma.server.upsert({
+      create: {
+        name: server.name,
+        discordId: server.id,
+      },
+      where: {
+        discordId: server.id
+      },
+      update: {
+        name: server.name,
+      }
+    });
+  }
+  
+  /**
    * Get whether a server handles a game.
    * @param serverId ID of server
    * @param gameId ID of game

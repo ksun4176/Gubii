@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { AutocompleteInteraction, ChatInputCommandInteraction, SharedSlashCommand, User } from 'discord.js';
-import { DatabaseHelper } from '../helpers/DatabaseHelper';
+import { DatabaseHelper } from '../../helpers/DatabaseHelper';
 
 /**
  * Which servers should be able to get command

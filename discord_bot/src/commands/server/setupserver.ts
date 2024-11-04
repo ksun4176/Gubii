@@ -1,6 +1,6 @@
 import { ChannelType, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { BaseChatInputCommand, CommandLevel } from '../../utils/structures/BaseChatInputCommand';
-import { ChannelPurposeType, UserRoleType } from "../../utils/helpers/DatabaseHelper";
+import { ChannelPurposeType, UserRoleType } from "../../helpers/DatabaseHelper";
 
 const options = {
   adminRole: 'adminrole',
@@ -47,18 +47,7 @@ export default class SetUpServerCommand extends BaseChatInputCommand {
       }
       
       // create server object
-      const server = await prisma.server.upsert({
-        create: {
-          name: serverInfo.name,
-          discordId: serverInfo.id,
-        },
-        where: {
-          discordId: serverInfo.id
-        },
-        update: {
-          name: serverInfo.name
-        }
-      });
+      const server = await databaseHelper.createServer(serverInfo);
       let message = `### Server Is Now Set Up\n` +
         `- Name: ${server.name}\n`;
 

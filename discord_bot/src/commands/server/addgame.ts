@@ -1,7 +1,7 @@
 import { AutocompleteInteraction, ChannelType, ChatInputCommandInteraction, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import { BaseChatInputCommand, CommandLevel } from '../../utils/structures/BaseChatInputCommand';
 import { Prisma } from "@prisma/client";
-import { ChannelPurposeType, UserRoleType } from "../../utils/helpers/DatabaseHelper";
+import { ChannelPurposeType, UserRoleType } from "../../helpers/DatabaseHelper";
 
 const options = {
   game: 'game',

@@ -1,6 +1,6 @@
 import { ActionRowBuilder, ButtonInteraction, ComponentType, StringSelectMenuBuilder, StringSelectMenuInteraction, StringSelectMenuOptionBuilder } from "discord.js";
 import { BaseButton } from "../utils/structures/BaseButton";
-import { applyToGuild } from "../utils/helpers/ApplyHelper";
+import { applyToGuild } from "../helpers/ApplyHelper";
 
 const menus = {
   games: 'games'

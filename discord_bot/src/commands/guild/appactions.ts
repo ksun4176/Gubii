@@ -1,8 +1,8 @@
 import { ActionRowBuilder, AnyThreadChannel, AutocompleteInteraction, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { BaseChatInputCommand, CommandLevel } from '../../utils/structures/BaseChatInputCommand';
 import { Prisma, PrismaClient, Server, User } from "@prisma/client";
-import { ChannelPurposeType, DatabaseHelper, GuildEvent, UserRoleType } from "../../utils/helpers/DatabaseHelper";
-import { applyToGuild, getGuildApplyInteractionInfo } from "../../utils/helpers/ApplyHelper";
+import { ChannelPurposeType, DatabaseHelper, GuildEvent, UserRoleType } from "../../helpers/DatabaseHelper";
+import { applyToGuild, getGuildApplyInteractionInfo } from "../../helpers/ApplyHelper";
 
 const subcommands = {
   accept: 'accept',

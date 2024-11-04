@@ -1,8 +1,8 @@
 import { Events, Message, OmitPartialGroupDMChannel } from "discord.js";
 import { BaseEvent } from '../../utils/structures/BaseEvent';
-import { getGuildApplyMessageInfo } from "../../utils/helpers/ApplyHelper";
-import { ChannelPurposeType, UserRoleType } from "../../utils/helpers/DatabaseHelper";
-import { forwardNewMessage } from "../../utils/helpers/MessageHelper";
+import { getGuildApplyMessageInfo } from "../../helpers/ApplyHelper";
+import { ChannelPurposeType, UserRoleType } from "../../helpers/DatabaseHelper";
+import { forwardNewMessage } from "../../helpers/MessageHelper";
 
 export default class MessageCreateEvent extends BaseEvent<Events.MessageCreate> {
   constructor() {

@@ -1,6 +1,6 @@
 import { Events, GuildMember, PartialGuildMember } from "discord.js";
 import { BaseEvent } from '../../utils/structures/BaseEvent';
-import { UserRoleType } from "../../utils/helpers/DatabaseHelper";
+import { UserRoleType } from "../../helpers/DatabaseHelper";
 
 export default class GuildMemberUpdateEvent extends BaseEvent<Events.GuildMemberUpdate> {
   constructor() {

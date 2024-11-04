@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { ClientEvents } from 'discord.js';
-import { DatabaseHelper } from '../helpers/DatabaseHelper';
+import { DatabaseHelper } from '../../helpers/DatabaseHelper';
 
 export abstract class BaseEvent<Event extends keyof ClientEvents> {
   constructor(private event: Event, private once?: boolean) { }

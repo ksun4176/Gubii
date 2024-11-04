@@ -1,7 +1,7 @@
 import { AutocompleteInteraction, ChannelType, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { BaseChatInputCommand, CommandLevel } from '../../utils/structures/BaseChatInputCommand';
 import { Prisma } from "@prisma/client";
-import { ServerEvent, UserRoleType } from "../../utils/helpers/DatabaseHelper";
+import { ServerEvent, UserRoleType } from "../../helpers/DatabaseHelper";
 
 const options = {
   event: 'event',

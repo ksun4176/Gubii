@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { ButtonInteraction, User } from 'discord.js';
-import { DatabaseHelper } from '../helpers/DatabaseHelper';
+import { DatabaseHelper } from '../../helpers/DatabaseHelper';
 
 export abstract class BaseButton {
   constructor(private customId: string) {}

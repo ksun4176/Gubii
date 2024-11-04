@@ -1,6 +1,6 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Events, GuildMember, MessageCreateOptions, PartialGuildMember } from "discord.js";
 import { BaseEvent } from '../../utils/structures/BaseEvent';
-import { ServerEvent } from "../../utils/helpers/DatabaseHelper";
+import { ServerEvent } from "../../helpers/DatabaseHelper";
 import GuildApplyButton from "../../buttons/GuildApply";
 
 export default class GuildMemberAddEvent extends BaseEvent<Events.GuildMemberAdd> {
