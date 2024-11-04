@@ -9,7 +9,7 @@ const options = {
 }
 
 const addServerTriggersCommand: CommandInterface = {
-    level: CommandLevel.Premium,
+    level: CommandLevel.All,
     data: new SlashCommandBuilder()
         .setName('addservertriggers')
         .setDescription('Add text to be sent based on actions triggered for the server')
@@ -23,7 +23,7 @@ const addServerTriggersCommand: CommandInterface = {
             option.setName(options.channel)
                 .setDescription('channel text should go to')
                 .setRequired(true)
-                .addChannelTypes(ChannelType.GuildText)
+                .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
         ),
     
     async execute(interaction: ChatInputCommandInteraction) {

@@ -29,7 +29,7 @@ const addGameTriggersCommand: CommandInterface = {
         .addChannelOption(option =>
             option.setName(options.channel)
                 .setDescription('channel text should go to')
-                .addChannelTypes(ChannelType.GuildText)
+                .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
         ),
     
     async execute(interaction: ChatInputCommandInteraction) {
@@ -178,9 +178,6 @@ const addGameTriggersCommand: CommandInterface = {
                     break;
                 case options.event:
                     let gameEvents = await prisma.guildEvent.findMany();
-                    if (!server.isPremium) {
-                        gameEvents.filter((event) => event.id === GuildEvent.Apply);
-                    }
                     await interaction.respond(
                         gameEvents.map(event => ({ name: event.name, value: event.id }))
                     );

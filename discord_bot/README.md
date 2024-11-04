@@ -1,6 +1,6 @@
 # Gubii
 A discord bot used to handle guild management.
-This handles everything from welcoming people to your server to guild applications to assigning out guild roles.
+This handles everything from welcoming people to your server to guild applications to assigning out guild roles to much more.
 
 ## Table of Contents
 - [Set up Discord Server](#set-up-discord-server)
@@ -20,12 +20,20 @@ This handles everything from welcoming people to your server to guild applicatio
 ## Set up Discord Server
 Can only be done by Server Owner
 1. Add bot to server at [Gubii Authorization](https://discord.com/oauth2/authorize?client_id=1246175342918635530).
-2. **<u>Important</u>** In Server Settings > Roles, move up the Gubii role to the top of the list. This allows it to assign out roles correctly.
+2. **Important** In Server Settings > Roles, move up the Gubii role to the top of the list. This allows it to assign out roles correctly.
 3. Run `/setupserver`
    - (Optional) Add server admin role to give other users permission to manage the server
    - (Optional) Add bot log channel to log everything the bot does in your server
 4. Assign out the admin role now so they can also run following commands
-5. **(Premium Only)** Add a welcome message for when people join the server. Read more about this in the **<u>Premium Functionality</u>** section
+5. **(Recommended)** Run `/addservertriggers/` to add a welcome message for when people join the server
+   - Placeholders
+      - `<{user}>` : New member's discord tag
+      - `<{serverName}>` : Name of server
+      - `<{serverAdmin}>` : Server admin role
+      - `[|apply|]` : Add the 'Apply to Guilds' button
+   1. Draft up a welcome message (use the placeholders specified above)
+   2. Run command with `event:ServerMemberAdd` and which channel to post message in
+   3. Paste in your welcome message
 
 ## Add Guilds
 Can only be done by Server Owner + Admins
@@ -42,12 +50,23 @@ Can only be done by Server Owner + Admins
    3. Paste in your application questions
 6. Assign out the guild management role out for each guild
 7. **(Recommended)** Assign out the server admin role to your guild leads
-8. **(Premium Only)** Add a welcome message for when people get accepted. Read more about this in the **<u>Premium Functionality</u>** section
+8. **(Recommended)** Run `/addgametriggers`to add more messages for when people get accepted to a guild or transfer to another one
+   - Placeholders
+      - `<{user}>` : New member's discord tag
+      - `<{serverName}>` : Name of server
+      - `<{serverAdmin}>` : Server admin role
+      - `<{gameName}>` : Name of game
+      - `<{guildName}>` : Name of guild
+      - `<{guildManagement}>` : Guild management role
+      - `<{guildMembers}>` : Guild member role
+   1. Draft up the welcome message (use the placeholders specified above)
+   2. Run command with `event:Accept/Transfer` and which channel to post message in
+   3. Paste in your welcome message
 
 ## Go through Guild Applications
 Can only be done by Guild Management
 - When a user applies to a guild, an application thread will be spawned
-1. To send a message to the applicant, <u>you must mention @Gubii in the message</u>.
+1. To send a message to the applicant, you must mention @Gubii in the message.
    - Messages will be reacted with ✅ or ❌ to let you know if they were sent
    - This is so all of management can discuss the application here amongst themselves.
 2. To accept an application, run `/application accept`
@@ -69,39 +88,16 @@ Can be done by anyone
 1. Run `/application apply`
    - You can specify a guild to apply to directly
 2. An application thread will be spawned
-3. To send a message to the recruiter, <u>you must mention @Gubii in the message</u>.
+3. To send a message to the recruiter, you must mention @Gubii in the message.
    - Messages will be reacted with ✅ or ❌ to let you know if they were sent
 
 ## Premium Functionality
 1. To become a premium server, go to https://discord.gg/UEWzKAu3 and talk to any admin
-   1. Run `/addpremiumserver`
-   2. Redeploy the commands so that the server gets all the new functionality
+   1. Run `/addpremiumserver` to enable/disable premium membership
 
-### `/addservertriggers`
 
-- **<u>Add a welcome message for when people join the server</u>**
-   - <u>Placeholders</u>
-      - `<{user}>` : New member's discord tag
-      - `<{serverName}>` : Name of server
-      - `<{serverAdmin}>` : Server admin role
-      - `[|apply|]` : Add the 'Apply to Guilds' button
-   1. Draft up a welcome message (use the placeholders specified above)
-   2. Run command with `event:ServerMemberAdd` and which channel to post message in
-   3. Paste in your welcome message
-
-### `/addgametriggers`
-- **<u>Add a message for when people get accepted to a guild or transfer to another one</u>**
-   - <u>Placeholders</u>
-      - `<{user}>` : New member's discord tag
-      - `<{serverName}>` : Name of server
-      - `<{serverAdmin}>` : Server admin role
-      - `<{gameName}>` : Name of game
-      - `<{guildName}>` : Name of guild
-      - `<{guildManagement}>` : Guild management role
-      - `<{guildMembers}>` : Guild member role
-   1. Draft up the welcome message (use the placeholders specified above)
-   2. Run command with `event:Accept/Transfer` and which channel to post message in
-   3. Paste in your welcome message
+### `/schedulemessage`
+- TBD
 
 ## FAQs
 

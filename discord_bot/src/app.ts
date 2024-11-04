@@ -13,6 +13,7 @@ declare module "discord.js" {
 dotenv.config();
 
 const main = async () => {
+    const port = process.env.BOT_PORT ?? "9000";
 	const client: Client = new Client({
 		intents: [
 			IntentsBitField.Flags.Guilds,
@@ -39,12 +40,11 @@ const main = async () => {
     try {
         await client.login(process.env.CLIENT_TOKEN);
         const app = express();
-        const port = "80";
         app.use(express.json());
         app.get("/", (_req: Request, res: Response) => {
             res.send("Bot is up and running");
         });
-        app.listen(port, () => console.log('Listening on port 80'));
+        app.listen(port, () => console.log(`Listening on port ${port}`));
     }
     catch (error) {
         console.log(error);
