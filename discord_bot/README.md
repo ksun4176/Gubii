@@ -103,34 +103,35 @@ Can be done by anyone
 
 
 ## File Structure
-All development files can be found in `src/`. All other folders are auto generated so they do not need to be touched.
-
-- ./app.ts: Entrypoint of our bot
-- ./*[Interface/Helper].ts: General set up functions and typings
-- ./buttons/*: All of our button interactions
-- ./commands/*: All of our commands (NOTE: our code look at all commands in this directory and subdirectory level deeper)
-- ./events/*: All of our events (NOTE: our code looks at all events at this level only)
+- `.env.example`: Example .env file to be filled in
+- `Dockerfile`: Used to create a docker image of your bot so it can be easily exported
+- `package.json` and `tsconfig.json`: These files are used to configure Node.js
+- `src/`: This is where your bot code would live
+   - `./app.ts`: Entrypoint of your bot
+   - `./utils`: This contains files to help with set up of interactions from individual structure to registering/binding
+   - `./buttons/*`: All of your button interactions
+   - `./commands/*`: All of your commands
+   - `./events/*`: All of your discord events
+- All other files are auto generated so they do not need to be touched.
 
 ## Contributing
 This server is built in Node.js.
 The languages we are using are TypeScript.
 
-To start a development bot, run these commands in terminal:
-1. Copy over `../sql_database/prisma/schema.prisma` to `discord_bot` so the Prisma Client can build out correctly
-2. Install node dependencies using `npm install`
-3. Make sure your prisma client is up to date by running `npx prisma generate`.
-4. Initiate a development server using `npm run dev`
-   - This uses nodemon which will track real time updates to your TypeScript + JSON and restart the server accordingly. 
-
-If you change the command definition (description, options, etc.), you will need to redeploy:
-(NOTE: You do not need to redeploy if you make updates to the execute function)
-1. Deploy commands using `npm run register`
-   - Node does not run on TypeScript so we need to create the corresponding JavaScript files before registering commands
+To start a development bot:
+1. Copy `../.env.example` to `.env` and fill it in for your discord bot
+2. Copy over `../sql_database/prisma/schema.prisma` to `discord_bot` so the Prisma Client can build out correctly
+3. Install node dependencies using `npm install`
+4. Make sure your prisma client is up to date by running `npx prisma generate`.
+5. Call `npm run register` to register your discord bot with your commands
+   - If you change anything in a command definition, you will need to call this again.
+5. Initiate a development server using `npm run dev`
+   - This uses nodemon which will track real time updates to your changes and restart the server automatically
+6. Once you get the `Ready! Logged in as <Discord Bot>`, your bot is online.
 
 To verify that the docker container runs as expected, run these commands in terminal:
 1. Rebuild container using `docker-compose -f docker-compose.yml up -d --build`
-   NOTE: Since Docker container is in separate network, DB_HOST needs to be set to your local machine's IP address to work properly. You would also need to make sure the login works from any connection.
-2. Access your server and verify changes
+   - NOTE: Since Docker container is in its own separate network, `localhost` might not connect correctly.You can try your local machine's IP address and verifying the SQL credentials works from any connection.
 
 ### To update the AWS ECS container:
 1. Find the AWS Elastic Container Registry for the discord bot.

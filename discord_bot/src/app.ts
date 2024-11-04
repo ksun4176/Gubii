@@ -1,19 +1,22 @@
 import dotenv from "dotenv";
 import { Client, Collection, IntentsBitField, Partials } from "discord.js";
-import { CommandInterface } from "./CommandInterface";
-import { addEventListeners, executeOnAllCommands } from "./DiscordHelper";
 import express, { Request, Response } from "express";
-
+import { bindCommands, bindButtons, bindEvents } from "./utils/register";
+import { BaseChatInputCommand } from "./utils/structures/BaseChatInputCommand";
+import { BaseEvent } from "./utils/structures/BaseEvent";
+import { BaseButton } from "./utils/structures/BaseButton";
 // augment client with the command property
 declare module "discord.js" {
-    interface Client {
-        commands: Collection<string, CommandInterface>
-  }
+	interface Client {
+    chatInputCommands: Collection<string, BaseChatInputCommand>
+    events: Collection<string, BaseEvent<any>>
+    buttons: Collection<string, BaseButton>
+	}
 }
 dotenv.config();
 
 const main = async () => {
-    const port = process.env.BOT_PORT ?? "9000";
+  const port = process.env.BOT_PORT ?? "9000";
 	const client: Client = new Client({
 		intents: [
 			IntentsBitField.Flags.Guilds,
@@ -29,25 +32,22 @@ const main = async () => {
 		]
 	});
 
-	client.commands = new Collection();
-	const setCommandExecutables = (command: CommandInterface) => {
-		client.commands.set(command.data.name, command);
-	}
-	executeOnAllCommands(setCommandExecutables);
+	client.chatInputCommands = new Collection();
+  client.events = new Collection();
+  client.buttons = new Collection();
 
-	addEventListeners(client);
-	
-    try {
-        await client.login(process.env.CLIENT_TOKEN);
-        const app = express();
-        app.use(express.json());
-        app.get("/", (_req: Request, res: Response) => {
-            res.send("Bot is up and running");
-        });
-        app.listen(port, () => console.log(`Listening on port ${port}`));
-    }
-    catch (error) {
-        console.log(error);
-    }
+	await bindCommands(client)
+  await bindEvents(client, "../events");
+  await bindButtons(client, "../buttons");
+  await client.login(process.env.CLIENT_TOKEN!);
+  const app = express();
+  app.use(express.json());
+  app.get("/", (_req: Request, res: Response) => {
+    res.send("Bot is up and running");
+  });
+  app.listen(port, () => console.log(`Listening on port ${port}`));
 }
-main();
+
+if (require.main === module) {
+  main();
+}

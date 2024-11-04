@@ -11,7 +11,7 @@
     "build": "rimraf dist/ && npx tsc",
     "start": "node .",
     "dev": "nodemon src/app.ts",
-    "register": "npm run build && node dist/deployCommands.js"
+    "register": "npm run build && node dist/utils/register.js"
   },
   "keywords": [],
   "author": "",
