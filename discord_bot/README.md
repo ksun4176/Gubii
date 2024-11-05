@@ -18,12 +18,10 @@ This handles everything from welcoming people to your server to guild applicatio
 - [Contributing](#contributing)
 
 ## Set up Discord Server
-Can only be done by Server Owner
+Can only be done by Server Owner + Admins
 1. Add bot to server at [Gubii Authorization](https://discord.com/oauth2/authorize?client_id=1246175342918635530).
 2. **Important** In Server Settings > Roles, move up the Gubii role to the top of the list. This allows it to assign out roles correctly.
-3. Run `/setupserver`
-   - (Optional) Add server admin role to give other users permission to manage the server
-   - (Optional) Add bot log channel to log everything the bot does in your server
+3. **(Optional)** Run `/updateserver` to add a channel to log everything the bot does in your server
 4. Assign out the admin role now so they can also run following commands
 5. **(Recommended)** Run `/addservertriggers/` to add a welcome message for when people join the server
    - Placeholders

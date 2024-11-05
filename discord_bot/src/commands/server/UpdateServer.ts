@@ -1,21 +1,17 @@
 import { ChannelType, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { BaseChatInputCommand, CommandLevel } from '../../utils/structures/BaseChatInputCommand';
 import { ChannelPurposeType, UserRoleType } from "../../helpers/DatabaseHelper";
+import { Prisma } from "@prisma/client";
 
 const options = {
-  adminRole: 'adminrole',
   logChannel: 'logchannel'
 }
 
-export default class SetUpServerCommand extends BaseChatInputCommand {
+export default class UpdateServerCommand extends BaseChatInputCommand {
   constructor() {
     const data = new SlashCommandBuilder()
-      .setName('setupserver')
-      .setDescription('Adds server information to the database')
-      .addRoleOption(option => 
-        option.setName(options.adminRole)
-          .setDescription('role for server admins')
-      )
+      .setName('updateserver')
+      .setDescription('Update server info. Should be ran if you decide to change server name/owner.')
       .addChannelOption(option =>
         option.setName(options.logChannel)
           .setDescription('channel to log actions of the bot')
@@ -30,25 +26,27 @@ export default class SetUpServerCommand extends BaseChatInputCommand {
       return;
     }
     await interaction.deferReply();
-    const serverInfo = interaction.guild;
+    const discordServer = interaction.guild;
 
-    const adminRoleInfo = interaction.options.getRole(options.adminRole);
     const logChannelInfo = interaction.options.getChannel(options.logChannel);
-    let errorMessage = 'There was an issue setting up the server.\n';
+    let errorMessage = 'There was an issue updating the server.\n';
     try {
       const { prisma, caller, databaseHelper } = await this.GetHelpers(interaction.user);
       
-      const discordCaller = await interaction.guild!.members.fetch(caller.discordId!);
-      // check permission
-      const hasPermission = await databaseHelper.userHasPermission(discordCaller, serverInfo, []);
+      const server = await databaseHelper.getServer(discordServer);
+      const discordCaller = await discordServer.members.fetch(caller.discordId!);
+      // check if server owner OR admin
+      const roles: Prisma.UserRoleWhereInput[] = [
+        { serverId: server.id, roleType: UserRoleType.ServerOwner },
+      ]
+      const hasPermission = await databaseHelper.userHasPermission(discordCaller, discordServer, roles);
       if (!hasPermission) {
         interaction.editReply('You do not have permission to run this command');
         return;
       }
       
       // create server object
-      const server = await databaseHelper.createServer(serverInfo);
-      let message = `### Server Is Now Set Up\n` +
+      let message = `### Server Is Updated\n` +
         `- Name: ${server.name}\n`;
 
       // server owner role
@@ -68,41 +66,6 @@ export default class SetUpServerCommand extends BaseChatInputCommand {
         });
       }
       message += `- Owner: <@${caller.discordId}>\n`;
-      
-      // admin role
-      let adminRole = await prisma.userRole.findFirst({
-        where: {
-          server: server,
-          roleType: UserRoleType.Administrator
-        }
-      });
-      if (adminRoleInfo) {
-        try {
-          if (adminRole) {
-            adminRole = await prisma.userRole.update({
-              where: { id: adminRole.id },
-              data: { 
-                name: adminRoleInfo.name,
-                discordId: adminRoleInfo.id
-              }
-            });
-          }
-          else {
-            adminRole = await prisma.userRole.create({
-              data: {
-                name: adminRoleInfo.name,
-                serverId: server.id,
-                roleType: UserRoleType.Administrator,
-                discordId: adminRoleInfo.id
-              }
-            });
-          }
-        }
-        catch (error) {
-          errorMessage += `- Could not add admin role. Has this role already been used?\n`;
-          throw error;
-        }
-      }
 
       // log channel
       let logChannel = await prisma.channelPurpose.findFirst({
@@ -130,17 +93,12 @@ export default class SetUpServerCommand extends BaseChatInputCommand {
           });
         }
       }
-
-      if (adminRole) {
-        message += `- Admin role: <@&${adminRole.discordId}>\n`;
-      }
       if (logChannel) {
         message += `- Log channel: <#${logChannel.discordId}>\n`;
       }
       console.log(message);
-      message += `You can now call /addgame to add support for games you want on your server.\n`
       await interaction.editReply(message);
-      await databaseHelper.writeToLogChannel(interaction.guild, server.id, message);
+      await databaseHelper.writeToLogChannel(discordServer, server.id, message);
     }
     catch (error) {
       console.error(error);

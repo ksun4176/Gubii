@@ -34,21 +34,21 @@ export default class AddServerTriggersCommand extends BaseChatInputCommand {
       return;
     }
     await interaction.deferReply();
-    const serverInfo = interaction.guild;
+    const discordServer = interaction.guild;
     const eventId = interaction.options.getInteger(options.event)!;
     let channelInfo = interaction.options.getChannel(options.channel)!;
     let errorMessage = 'There was an issue adding the trigger.\n';
     try {
       const { prisma, caller, databaseHelper } = await this.GetHelpers(interaction.user);
 
-      const server = await prisma.server.findUniqueOrThrow({ where: {discordId: serverInfo.id } });
-      const discordCaller = await interaction.guild!.members.fetch(caller.discordId!);
+      const server = await databaseHelper.getServer(discordServer);
+      const discordCaller = await discordServer.members.fetch(caller.discordId!);
       // check if server owner OR admin
       const roles: Prisma.UserRoleWhereInput[] = [
         { serverId: server.id, roleType: UserRoleType.ServerOwner },
         { serverId: server.id, roleType: UserRoleType.Administrator }
       ]
-      const hasPermission = await databaseHelper.userHasPermission(discordCaller, serverInfo, roles);
+      const hasPermission = await databaseHelper.userHasPermission(discordCaller, discordServer, roles);
       if (!hasPermission) {
         interaction.editReply('You do not have permission to run this command');
         return;
@@ -114,7 +114,7 @@ export default class AddServerTriggersCommand extends BaseChatInputCommand {
         message += `\n**Text will be sent to ${channelInfo} on event trigger.**\n`;
         console.log(message);
         await interaction.followUp(message);
-        await databaseHelper.writeToLogChannel(serverInfo, server.id, message);
+        await databaseHelper.writeToLogChannel(discordServer, server.id, message);
       }
       catch (error) {
         console.error(error);

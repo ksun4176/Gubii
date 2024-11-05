@@ -45,7 +45,7 @@ export default class AddGameCommand extends BaseChatInputCommand {
       return;
     }
     await interaction.deferReply();
-    const serverInfo = interaction.guild;
+    const discordServer = interaction.guild;
 
     const gameId = interaction.options.getInteger(options.game)!;
     const managementRoleInfo = interaction.options.getRole(options.managementrole)!;
@@ -53,16 +53,16 @@ export default class AddGameCommand extends BaseChatInputCommand {
     const channelsCategoryInfo = interaction.options.getChannel(options.channelscategory);
     let errorMessage = 'There was an issue adding support for the game.\n';
     try {
-      const { prisma, caller, databaseHelper } = await this.GetHelpers(interaction.user);
+      const { caller, databaseHelper } = await this.GetHelpers(interaction.user);
 
-      const server = await prisma.server.findUniqueOrThrow({ where: {discordId: serverInfo.id } });
-      const discordCaller = await interaction.guild!.members.fetch(caller.discordId!);
+      const server = await databaseHelper.getServer(discordServer);
+      const discordCaller = await discordServer.members.fetch(caller.discordId!);
       // check if server owner OR admin
       const roles: Prisma.UserRoleWhereInput[] = [
         { serverId: server.id, roleType: UserRoleType.ServerOwner },
         { serverId: server.id, roleType: UserRoleType.Administrator }
       ]
-      const hasPermission = await databaseHelper.userHasPermission(discordCaller, serverInfo, roles);
+      const hasPermission = await databaseHelper.userHasPermission(discordCaller, discordServer, roles);
       if (!hasPermission) {
         interaction.editReply('You do not have permission to run this command');
         return;
@@ -88,14 +88,14 @@ export default class AddGameCommand extends BaseChatInputCommand {
         throw error;
       }
 
-      const recruitChannelInfo = await interaction.guild.channels.create({
+      const recruitChannelInfo = await discordServer.channels.create({
         name: `${gameGuild.name} recruitment`,
         topic: `Recruitment channel for ${gameGuild.name}`,
         type: ChannelType.GuildText,
         parent: channelsCategoryInfo?.id,
         permissionOverwrites: [
           {
-            id: interaction.guild.roles.everyone,
+            id: discordServer.roles.everyone,
             deny: [PermissionFlagsBits.ViewChannel],
           },
           { 
@@ -107,14 +107,14 @@ export default class AddGameCommand extends BaseChatInputCommand {
       const recruitThread = await databaseHelper.createGameChannel(gameGuild, ChannelPurposeType.Recruitment, recruitChannelInfo.id);
       message += `- Recruitment thread: <#${recruitThread!.discordId}>\n`;
 
-      const applicantChannelInfo = await interaction.guild.channels.create({
+      const applicantChannelInfo = await discordServer.channels.create({
         name: `${gameGuild.name} applicants`,
         topic: `Applicants channel for ${gameGuild.name}`,
         type: ChannelType.GuildText,
         parent: channelsCategoryInfo?.id,
         permissionOverwrites: [
           {
-            id: interaction.guild.roles.everyone,
+            id: discordServer.roles.everyone,
             allow: [PermissionFlagsBits.SendMessagesInThreads],
           }
         ],
@@ -125,7 +125,7 @@ export default class AddGameCommand extends BaseChatInputCommand {
       console.log(message);
       message += `You can now call /createguild to add guilds for this game.\n **(Recommended)** You can also call /addgametriggers to set up the application for the game`
       await interaction.editReply(message);
-      await databaseHelper.writeToLogChannel(interaction.guild, server.id, message);
+      await databaseHelper.writeToLogChannel(discordServer, server.id, message);
     }
     catch (error) {
       console.error(error);

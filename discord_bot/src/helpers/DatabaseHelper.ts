@@ -1,5 +1,5 @@
 import { Guild, Prisma, PrismaClient, Server, User } from "@prisma/client";
-import { APIRole, Guild as DiscordServer, GuildMember, Role, User as DiscordUser } from "discord.js";
+import { APIRole, Guild as DiscordServer, GuildMember, Role, User as DiscordUser, PermissionFlagsBits } from "discord.js";
 
 export enum ChannelPurposeType {
   Recruitment = 1,
@@ -34,11 +34,11 @@ export class DatabaseHelper {
 
   //#region Server Helpers
   /**
-   * Create a server object
+   * Get the server object 
    * @param server Discord Server information
    * @returns The created DB server object
    */
-  public async createServer(server: DiscordServer) {
+  public async getServer(server: DiscordServer) {
     return await this.__prisma.server.upsert({
       create: {
         name: server.name,
@@ -303,6 +303,14 @@ export class DatabaseHelper {
     const owner = await server.fetchOwner();
     if (owner.id === user.id) {
       return true;
+    }
+    for (let criterion of rolesCriteria) {
+      if (criterion.serverId === server.id && criterion.roleType === UserRoleType.Administrator) {
+        if (user.permissions.has(PermissionFlagsBits.Administrator, true)) {
+          return true;
+        }
+        break;
+      }
     }
     let rolesRequired = await this.__prisma.userRole.findMany({ where: { OR: rolesCriteria } });
     rolesRequired = rolesRequired.filter(role => !!role.discordId);

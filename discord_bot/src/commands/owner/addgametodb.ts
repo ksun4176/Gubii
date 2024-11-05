@@ -26,20 +26,20 @@ export default class AddGameToDBCommand extends BaseChatInputCommand {
       return;
     }
     await interaction.deferReply();
-    const serverInfo = interaction.guild;
+    const discordServer = interaction.guild;
 
     const name = interaction.options.getString(options.name)!;
     try {
       const { prisma, caller, databaseHelper } = await this.GetHelpers(interaction.user);
 
-      const server = await prisma.server.findUniqueOrThrow({ where: {discordId: serverInfo.id } });
-      const discordCaller = await interaction.guild!.members.fetch(caller.discordId!);
+      const server = await databaseHelper.getServer(discordServer);
+      const discordCaller = await discordServer.members.fetch(caller.discordId!);
       // check if server owner OR admin
       const roles: Prisma.UserRoleWhereInput[] = [
         { serverId: server.id, roleType: UserRoleType.ServerOwner },
         { serverId: server.id, roleType: UserRoleType.Administrator }
       ]
-      const hasPermission = await databaseHelper.userHasPermission(discordCaller, serverInfo, roles);
+      const hasPermission = await databaseHelper.userHasPermission(discordCaller, discordServer, roles);
       if (!hasPermission) {
         interaction.editReply('You do not have permission to run this command');
         return;

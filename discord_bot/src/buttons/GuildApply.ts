@@ -15,14 +15,13 @@ export default class GuildApplyButton extends BaseButton {
     if (!interaction.guild) {
       return;
     }
-    const serverInfo = interaction.guild;
+    const discordServer = interaction.guild;
     const originalMessage = interaction.message;
     await interaction.deferUpdate();
 
     try {
       const { prisma, caller, databaseHelper } = await this.GetHelpers(interaction.user);
-      const server = await prisma.server.findUniqueOrThrow({ where: {discordId: serverInfo.id } });
-      
+      const server = await databaseHelper.getServer(discordServer);
       const gameGuilds = await databaseHelper.getGameGuilds(server.id);
       if (gameGuilds.length === 0) {
         return;

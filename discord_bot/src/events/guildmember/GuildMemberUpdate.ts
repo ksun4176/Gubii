@@ -13,7 +13,7 @@ export default class GuildMemberUpdateEvent extends BaseEvent<Events.GuildMember
       return;
     }
     try {
-      this.__updateSharedRoles(newMember);
+      await this.__updateSharedRoles(newMember);
     }
     catch (error) {
       console.error(error);
@@ -28,7 +28,7 @@ export default class GuildMemberUpdateEvent extends BaseEvent<Events.GuildMember
     const { prisma, databaseHelper } = await this.GetHelpers();
             
     // get server + guild roles
-    const server = await prisma.server.findUniqueOrThrow({ where: { discordId: member.guild.id } });
+    const server = await databaseHelper.getServer(member.guild);
     const user = await databaseHelper.getUser(member.user);
     const gameGuilds = await databaseHelper.getGameGuilds(server.id);
     const guildRoles = await prisma.userRole.findMany({

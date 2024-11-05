@@ -1,4 +1,4 @@
-import { ActionRowBuilder, AnyThreadChannel, AutocompleteInteraction, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import { ActionRowBuilder, AnyThreadChannel, AutocompleteInteraction, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, DiscordAPIError, RESTJSONErrorCodes, SlashCommandBuilder } from "discord.js";
 import { BaseChatInputCommand, CommandLevel } from '../../utils/structures/BaseChatInputCommand';
 import { Prisma, PrismaClient, Server, User } from "@prisma/client";
 import { ChannelPurposeType, DatabaseHelper, GuildEvent, UserRoleType } from "../../helpers/DatabaseHelper";
@@ -81,7 +81,7 @@ export default class ApplicationCommand extends BaseChatInputCommand {
     const subcommand = interaction.options.getSubcommand();
     try {
       const { prisma, caller, databaseHelper } = await this.GetHelpers(interaction.user);
-      const server = await prisma.server.findUniqueOrThrow({ where: { discordId: interaction.guild.id } });
+      const server = await databaseHelper.getServer(interaction.guild);
       switch (subcommand) {
         case subcommands.accept:
           await this.__acceptAction(interaction, server, prisma, caller, databaseHelper);
@@ -110,12 +110,12 @@ export default class ApplicationCommand extends BaseChatInputCommand {
     if (!interaction.guild) {
       return;
     }
-    const serverInfo = interaction.guild;
+    const discordServer = interaction.guild;
     const focusedOption = interaction.options.getFocused(true);
     
     try {
       const { prisma, databaseHelper } = await this.GetHelpers(interaction.user);
-      const server = await prisma.server.findUniqueOrThrow({ where: {discordId: serverInfo.id } });
+      const server = await databaseHelper.getServer(discordServer);
       
       switch (focusedOption.name) {
         case options.game:
@@ -213,8 +213,17 @@ export default class ApplicationCommand extends BaseChatInputCommand {
 
     // check if roles are new and need to be added
     const guildRole = await databaseHelper.getGuildRole(guild, UserRoleType.GuildMember);
-    if (guildRole?.discordId && !discordUser.roles.cache.has(guildRole.discordId)) {
-      await discordUser.roles.add(guildRole.discordId);
+    try {
+      if (guildRole?.discordId && !discordUser.roles.cache.has(guildRole.discordId)) {
+        await discordUser.roles.add(guildRole.discordId);
+      }
+    }
+    catch (error) {
+      if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.MissingPermissions) {
+        await interaction.editReply(`Bot cannot assign role. Check Server Settings > Roles that its role is higher on the list`);
+        return;
+      }
+      throw error;
     }
     if (application) {
       await prisma.guildApplicant.delete({ where: { id: application.id } });

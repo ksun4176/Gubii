@@ -9,10 +9,10 @@ export default class GuildMemberAddEvent extends BaseEvent<Events.GuildMemberAdd
   }
 
   override async execute(member: GuildMember | PartialGuildMember): Promise<void> {
-    const serverInfo = member.guild;
+    const discordServer = member.guild;
     try {
       const { prisma, databaseHelper } = await this.GetHelpers();
-      const server = await prisma.server.findUniqueOrThrow({ where: { discordId: serverInfo.id } });
+      const server = await databaseHelper.getServer(discordServer);
       const user = await databaseHelper.getUser(member.user);
 
       const welcomeMessage = await prisma.serverMessage.findUnique({ where: {
@@ -25,7 +25,7 @@ export default class GuildMemberAddEvent extends BaseEvent<Events.GuildMemberAdd
         return;
       }
 
-      const discordChannel = await serverInfo.channels.fetch(welcomeMessage.channelId);
+      const discordChannel = await discordServer.channels.fetch(welcomeMessage.channelId);
       if (!discordChannel?.isSendable()) {
         return;
       }

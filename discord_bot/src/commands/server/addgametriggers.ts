@@ -40,7 +40,7 @@ export default class AddGameTriggersCommand extends BaseChatInputCommand {
       return;
     }
     await interaction.deferReply();
-    const serverInfo = interaction.guild;
+    const discordServer = interaction.guild;
     const gameGuildId = interaction.options.getInteger(options.game)!;
     const eventId = interaction.options.getInteger(options.event)!;
     let channelInfo = interaction.options.getChannel(options.channel);
@@ -48,14 +48,14 @@ export default class AddGameTriggersCommand extends BaseChatInputCommand {
     try {
       const { prisma, caller, databaseHelper } = await this.GetHelpers(interaction.user);
 
-      const server = await prisma.server.findUniqueOrThrow({ where: {discordId: serverInfo.id } });
-      const discordCaller = await interaction.guild!.members.fetch(caller.discordId!);
+      const server = await databaseHelper.getServer(discordServer);
+      const discordCaller = await discordServer.members.fetch(caller.discordId!);
       // check if server owner OR admin
       const roles: Prisma.UserRoleWhereInput[] = [
         { serverId: server.id, roleType: UserRoleType.ServerOwner },
         { serverId: server.id, roleType: UserRoleType.Administrator }
       ]
-      const hasPermission = await databaseHelper.userHasPermission(discordCaller, serverInfo, roles);
+      const hasPermission = await databaseHelper.userHasPermission(discordCaller, discordServer, roles);
       if (!hasPermission) {
         interaction.editReply('You do not have permission to run this command');
         return;
@@ -147,7 +147,7 @@ export default class AddGameTriggersCommand extends BaseChatInputCommand {
         }
         console.log(message);
         await interaction.followUp(message);
-        await databaseHelper.writeToLogChannel(serverInfo, server.id, message);
+        await databaseHelper.writeToLogChannel(discordServer, server.id, message);
       }
       catch (error) {
         console.error(error);
@@ -164,12 +164,12 @@ export default class AddGameTriggersCommand extends BaseChatInputCommand {
     if (!interaction.guild) {
       return;
     }
-    const serverInfo = interaction.guild;
+    const discordServer = interaction.guild;
     const focusedOption = interaction.options.getFocused(true);
     
     try {
       const { prisma, databaseHelper } = await this.GetHelpers(interaction.user);
-      const server = await prisma.server.findUniqueOrThrow({ where: { discordId: serverInfo.id } });
+      const server = await databaseHelper.getServer(discordServer);
       
       switch (focusedOption.name) {
         case options.game:
