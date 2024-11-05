@@ -86,8 +86,7 @@ Can be done by anyone
 1. Run `/application apply`
    - You can specify a guild to apply to directly
 2. An application thread will be spawned
-3. To send a message to the recruiter, you must mention @Gubii in the message.
-   - Messages will be reacted with ✅ or ❌ to let you know if they were sent
+3. Messages will be reacted with ✅ or ❌ to let you know if they were sent
 
 ## Premium Functionality
 1. To become a premium server, go to https://discord.gg/UEWzKAu3 and talk to any admin

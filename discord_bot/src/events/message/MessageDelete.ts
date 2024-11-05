@@ -29,7 +29,7 @@ export default class MessageDeleteEvent extends BaseEvent<Events.MessageDelete> 
             return;
           }
 
-          const targetMessage = await findForwardedMessage(message, targetThread);
+          const targetMessage = await findForwardedMessage(message, targetThread, 50);
           if (!targetMessage) {
             throw new Error('Message to delete not found. Might be too old now.');
           }

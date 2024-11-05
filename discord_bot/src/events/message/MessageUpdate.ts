@@ -22,33 +22,17 @@ export default class MessageUpdateEvent extends BaseEvent<Events.MessageUpdate> 
         }
         const { targetThread } = messageInfo;
 
-        // only forward newMessage if it mentions the bot
-        if (!newMessage.mentions.has(newMessage.client.user)) { 
-          // we should tell user they did not mention the bot
-          if (oldMessage.mentions.has(oldMessage.client.user)) {
-            await newMessage.reactions.removeAll();
-            await newMessage.react('❌');
-            await newMessage.channel.send(`Hi! Your edit was not sent. Just edit and mention me (${newMessage.client.user}) in it to fix.`);
-          }
-          return;
-        }
-
         newMessage.content = newMessage.content.replace(`${newMessage.client.user}`, '');
         const targetMessage = await findForwardedMessage(oldMessage, targetThread);
-        if (targetMessage) {
-          const embed = new EmbedBuilder()
-            .setAuthor({ name: newMessage.author.displayName, iconURL: newMessage.author.avatarURL() ?? undefined })
-            .setFooter({ text: newMessage.id })
-            .setTimestamp()
-            .setDescription(newMessage.content);
-          await targetMessage.edit({ embeds: [embed] });
+        if (!targetMessage) {
+          throw new Error('Message to edit not found. Might be too old now.');
         }
-        else {
-          await forwardNewMessage(newMessage, targetThread);
-        }
-
-        await newMessage.reactions.removeAll();
-        await newMessage.react('✅');
+        const embed = new EmbedBuilder()
+          .setAuthor({ name: newMessage.author.displayName, iconURL: newMessage.author.avatarURL() ?? undefined })
+          .setFooter({ text: newMessage.id })
+          .setTimestamp()
+          .setDescription(newMessage.content);
+        await targetMessage.edit({ embeds: [embed] });
         await newMessage.react('✏️');
       }
       catch (error) {

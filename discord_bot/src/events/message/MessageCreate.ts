@@ -24,15 +24,12 @@ export default class MessageCreateEvent extends BaseEvent<Events.MessageCreate> 
         const { sourceChannel, targetChannel, targetThread } = messageInfo;
 
         // only forward newMessage if it mentions the bot
-        if (!newMessage.mentions.has(newMessage.client.user)) { 
-          // we should tell applicant thread if they did not mention the bot
-          if (sourceChannel.channelType === ChannelPurposeType.Applicant) {
-            await newMessage.channel.send(`Hi! Your message was not sent. Just mention me (${newMessage.client.user}) to it to send it.`);
+        if (sourceChannel.channelType === ChannelPurposeType.Recruitment) {
+          if (!newMessage.mentions.has(newMessage.client.user)) {
+            return;
           }
-          return;
         }
 
-        newMessage.content = newMessage.content.replace(`${newMessage.client.user}`, '');
         // notify management again if thread has been archived
         if (targetChannel.channelType === ChannelPurposeType.Recruitment && targetThread.archived) {
           const managementRole = await prisma.userRole.findUniqueOrThrow({ where: {
@@ -46,6 +43,7 @@ export default class MessageCreateEvent extends BaseEvent<Events.MessageCreate> 
           await targetThread.send(recruitThreadMessage);
         }
 
+        newMessage.content = newMessage.content.replace(`${newMessage.client.user}`, '');
         await forwardNewMessage(newMessage, targetThread);
         await newMessage.react('✅');
       }
