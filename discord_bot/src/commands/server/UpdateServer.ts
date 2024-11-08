@@ -1,7 +1,7 @@
 import { ChannelType, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { BaseChatInputCommand, CommandLevel } from '../../utils/structures/BaseChatInputCommand';
-import { ChannelPurposeType, UserRoleType } from "../../helpers/DatabaseHelper";
-import { Prisma } from "@prisma/client";
+import { ChannelPurposeType, Prisma, UserRoleType } from "@prisma/client";
+import { writeToLogChannel } from "../../helpers/ChannelHelper";
 
 const options = {
   logChannel: 'logchannel'
@@ -33,7 +33,8 @@ export default class UpdateServerCommand extends BaseChatInputCommand {
     try {
       const { prisma, caller, databaseHelper } = await this.GetHelpers(interaction.user);
       
-      const server = await databaseHelper.getServer(discordServer);
+      const server = await databaseHelper.getServer(interaction.client, discordServer);
+      if (!server) return;
       const discordCaller = await discordServer.members.fetch(caller.discordId!);
       // check if server owner OR admin
       const roles: Prisma.UserRoleWhereInput[] = [
@@ -52,7 +53,7 @@ export default class UpdateServerCommand extends BaseChatInputCommand {
       // server owner role
       let ownerRole = await prisma.userRole.findFirst({
         where: {
-          server: server,
+          serverId: server.id,
           roleType: UserRoleType.ServerOwner
         }
       });
@@ -68,19 +69,14 @@ export default class UpdateServerCommand extends BaseChatInputCommand {
       message += `- Owner: <@${caller.discordId}>\n`;
 
       // log channel
-      let logChannel = await prisma.channelPurpose.findFirst({
-        where: {
-          server: server,
-          channelType: ChannelPurposeType.BotLog
-        }
+      let logChannel = server.channels.find((channel) => {
+        channel.channelType === ChannelPurposeType.BotLog
       });
       if (logChannelInfo) {
         if (logChannel) {
           logChannel = await prisma.channelPurpose.update({
             where: { id: logChannel.id },
-            data: { 
-              discordId: logChannelInfo.id
-            }
+            data: { discordId: logChannelInfo.id }
           });
         }
         else {
@@ -96,9 +92,10 @@ export default class UpdateServerCommand extends BaseChatInputCommand {
       if (logChannel) {
         message += `- Log channel: <#${logChannel.discordId}>\n`;
       }
+      await databaseHelper.createServer(interaction.client, discordServer);
       console.log(message);
       await interaction.editReply(message);
-      await databaseHelper.writeToLogChannel(discordServer, server.id, message);
+      await writeToLogChannel(discordServer, server, message);
     }
     catch (error) {
       console.error(error);

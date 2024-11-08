@@ -1,6 +1,7 @@
 /**
  * Learn more about the Seed Client by following our guide: https://docs.snaplet.dev/seed/getting-started
  */
+import { UserRoleType } from "@prisma/client";
 import { createSeedClient } from "@snaplet/seed";
 import { parseArgs } from 'node:util';
 
@@ -13,38 +14,6 @@ const main = async () => {
 
     // Truncate all tables in the database
     await seed.$resetDatabase();
-
-    // Seed channel_purpose_types
-    const channelPurposeTypes = [
-        'Recruitment',
-        'Applicant',
-        'BotLog',
-    ]
-    await seed.channelPurposeType(channelPurposeTypes.map((type, index) => { return { id: index+1, name: type } }));
-
-    // Seed user_role_types
-    const userRoleTypes = [
-        'Server Owner',
-        'Administrator',
-        'Guild Lead',
-        'Guild Management',
-        'Guild Member',
-    ]
-    await seed.userRoleType(userRoleTypes.map((type, index) => { return { id: index+1, name: type } }));
-    
-    // Seed server events
-    const serverEvents = [
-        'ServerMemberAdd',
-    ]
-    await seed.serverEvent(serverEvents.map((event, index) => { return { id: index+1, name: event } }));
-
-    // Seed guild events
-    const guildEvents = [
-        'Apply',
-        'Accept',
-        'Transfer'
-    ]
-    await seed.guildEvent(guildEvents.map((event, index) => { return { id: index+1, name: event } }));
 
     // Seed games
     const games = [
@@ -68,7 +37,7 @@ const main = async () => {
             // Seed server owner roles -> links between user + role
             const store = await seed.userRole([{
                 name: `${server.name} Owner`,
-                roleType: 1,
+                role_type: UserRoleType.ServerOwner,
                 serverId: server.id,
                 discordId: `server${server.id}owner`
             }]);
@@ -77,13 +46,6 @@ const main = async () => {
             }],{
                 connect: { userRole: [store.userRole[0]] }
             });
-            // Seed server admin roles
-            await seed.userRole([{
-                name: `${server.name} Admin`,
-                roleType: 2,
-                serverId: server.id,
-                discordId: `server${server.id}admin`
-            }]);
             const gameIndex = Math.floor(Math.random() * games.length + 1);
             // Seed placeholder guilds
             await seed.guild([{
@@ -111,7 +73,7 @@ const main = async () => {
             // Seed guild management roles
             await seed.userRole([{
                 name: `${guild.name} Management`,
-                roleType: 4,
+                role_type: UserRoleType.GuildManagement,
                 serverId: guild.serverId,
                 guildId: guild.id,
                 discordId: `guild${guild.id}manager`
@@ -119,7 +81,7 @@ const main = async () => {
             // Seed guild member roles
             const store = await seed.userRole([{
                 name: `${guild.name} Member`,
-                roleType: 5,
+                role_type: UserRoleType.GuildMember,
                 serverId: guild.serverId,
                 guildId: guild.id,
                 discordId: `guild${guild.id}member`

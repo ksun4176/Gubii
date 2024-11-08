@@ -1,7 +1,6 @@
 import { ChannelType, ChatInputCommandInteraction, GuildTextBasedChannel, SlashCommandBuilder } from "discord.js";
 import { BaseChatInputCommand, CommandLevel } from '../../utils/structures/BaseChatInputCommand';
-import { Prisma } from "@prisma/client";
-import { UserRoleType } from "../../helpers/DatabaseHelper";
+import { Prisma, UserRoleType } from "@prisma/client";
 import { scheduleJob } from "node-schedule";
 import moment from "moment";
 
@@ -43,7 +42,8 @@ export default class ScheduleMessageCommand extends BaseChatInputCommand {
     try {
       const { caller, databaseHelper } = await this.GetHelpers(interaction.user);
 
-      const server = await databaseHelper.getServer(discordServer);
+      const server = await databaseHelper.getServer(interaction.client, discordServer);
+      if (!server) return;
       const discordCaller = await discordServer.members.fetch(caller.discordId!);
       // check if server owner OR admin
       const roles: Prisma.UserRoleWhereInput[] = [

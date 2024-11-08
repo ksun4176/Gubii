@@ -21,11 +21,10 @@ export default class GuildApplyButton extends BaseButton {
 
     try {
       const { prisma, caller, databaseHelper } = await this.GetHelpers(interaction.user);
-      const server = await databaseHelper.getServer(discordServer);
+      const server = await databaseHelper.getServer(interaction.client, discordServer);
+      if (!server) return;
       const gameGuilds = await databaseHelper.getGameGuilds(server.id);
-      if (gameGuilds.length === 0) {
-        return;
-      }
+      if (gameGuilds.length === 0) return;
 
       const options: StringSelectMenuOptionBuilder[] = [];
       for (const guild of gameGuilds) {

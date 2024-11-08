@@ -1,7 +1,7 @@
 import { AutocompleteInteraction, ChannelType, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { BaseChatInputCommand, CommandLevel } from '../../utils/structures/BaseChatInputCommand';
-import { Prisma } from "@prisma/client";
-import { GuildEvent, UserRoleType } from "../../helpers/DatabaseHelper";
+import { GuildEvent, Prisma, UserRoleType } from "@prisma/client";
+import { writeToLogChannel } from "../../helpers/ChannelHelper";
 
 const options = {
   game: 'game',
@@ -20,7 +20,7 @@ export default class AddGameTriggersCommand extends BaseChatInputCommand {
           .setRequired(true)
           .setAutocomplete(true)
       )
-      .addIntegerOption(option => 
+      .addStringOption(option => 
         option.setName(options.event)
           .setDescription('event the trigger is for')
           .setRequired(true)
@@ -42,13 +42,14 @@ export default class AddGameTriggersCommand extends BaseChatInputCommand {
     await interaction.deferReply();
     const discordServer = interaction.guild;
     const gameGuildId = interaction.options.getInteger(options.game)!;
-    const eventId = interaction.options.getInteger(options.event)!;
+    const eventId = interaction.options.getString(options.event)! as GuildEvent;
     let channelInfo = interaction.options.getChannel(options.channel);
     let errorMessage = 'There was an issue adding the trigger.\n';
     try {
       const { prisma, caller, databaseHelper } = await this.GetHelpers(interaction.user);
 
-      const server = await databaseHelper.getServer(discordServer);
+      const server = await databaseHelper.getServer(interaction.client, discordServer);
+      if (!server) return;
       const discordCaller = await discordServer.members.fetch(caller.discordId!);
       // check if server owner OR admin
       const roles: Prisma.UserRoleWhereInput[] = [
@@ -73,10 +74,10 @@ export default class AddGameTriggersCommand extends BaseChatInputCommand {
       let message = '';
       let gameGuild = await prisma.guild.findUniqueOrThrow({ where: { id: gameGuildId } });
       let guildMessage = await prisma.guildMessage.findUnique({ where: {
-        serverId_guildId_eventId: {
+        serverId_guildId_event: {
           serverId: server.id,
           guildId: gameGuild.id,
-          eventId: eventId
+          event: eventId
         }
       }});
       if (guildMessage) {
@@ -106,15 +107,15 @@ export default class AddGameTriggersCommand extends BaseChatInputCommand {
           create: {
             serverId: server.id,
             guildId: gameGuild.id,
-            eventId: eventId,
+            event: eventId,
             text: guildMessageText,
             channelId: channelInfo?.id
           },
           where: {
-            serverId_guildId_eventId: {
+            serverId_guildId_event: {
               serverId: server.id,
               guildId: gameGuild.id,
-              eventId: eventId
+              event: eventId
             }
           },
           update: {
@@ -132,10 +133,10 @@ export default class AddGameTriggersCommand extends BaseChatInputCommand {
             break;
           default:
             const savedMessage = await prisma.guildMessage.findUniqueOrThrow({ where: {
-              serverId_guildId_eventId: {
+              serverId_guildId_event: {
                 serverId: server.id,
                 guildId: gameGuild.id,
-                eventId: eventId
+                event: eventId
               }
             }});
             const messageInfo = await databaseHelper.replaceMessagePlaceholders(savedMessage.text, caller, server, gameGuild);
@@ -147,7 +148,7 @@ export default class AddGameTriggersCommand extends BaseChatInputCommand {
         }
         console.log(message);
         await interaction.followUp(message);
-        await databaseHelper.writeToLogChannel(discordServer, server.id, message);
+        await writeToLogChannel(discordServer, server, message);
       }
       catch (error) {
         console.error(error);
@@ -168,9 +169,9 @@ export default class AddGameTriggersCommand extends BaseChatInputCommand {
     const focusedOption = interaction.options.getFocused(true);
     
     try {
-      const { prisma, databaseHelper } = await this.GetHelpers(interaction.user);
-      const server = await databaseHelper.getServer(discordServer);
-      
+      const { databaseHelper } = await this.GetHelpers(interaction.user);
+      const server = await databaseHelper.getServer(interaction.client, discordServer);
+      if (!server) return;
       switch (focusedOption.name) {
         case options.game:
           let gameGuilds = await databaseHelper.getGameGuilds(server.id);
@@ -179,9 +180,9 @@ export default class AddGameTriggersCommand extends BaseChatInputCommand {
           );
           break;
         case options.event:
-          let gameEvents = await prisma.guildEvent.findMany();
+          const gameEventKeys = Object.values(GuildEvent);
           await interaction.respond(
-            gameEvents.map(event => ({ name: event.name, value: event.id }))
+            gameEventKeys.map(event => ({ name: event, value: event }))
           );
           break;
       }

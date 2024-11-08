@@ -1,7 +1,7 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Events, GuildMember, MessageCreateOptions, PartialGuildMember } from "discord.js";
 import { BaseEvent } from '../../utils/structures/BaseEvent';
-import { ServerEvent } from "../../helpers/DatabaseHelper";
 import GuildApplyButton from "../../buttons/GuildApply";
+import { ServerEvent } from "@prisma/client";
 
 export default class GuildMemberAddEvent extends BaseEvent<Events.GuildMemberAdd> {
   constructor() {
@@ -12,13 +12,14 @@ export default class GuildMemberAddEvent extends BaseEvent<Events.GuildMemberAdd
     const discordServer = member.guild;
     try {
       const { prisma, databaseHelper } = await this.GetHelpers();
-      const server = await databaseHelper.getServer(discordServer);
+      const server = await databaseHelper.getServer(discordServer.client, discordServer);
+      if (!server) return;
       const user = await databaseHelper.getUser(member.user);
 
       const welcomeMessage = await prisma.serverMessage.findUnique({ where: {
-        serverId_eventId: {
+        serverId_event: {
           serverId: server.id,
-          eventId: ServerEvent.ServerMemberAdd
+          event: ServerEvent.ServerMemberAdd
         }
       }});
       if (!welcomeMessage || !welcomeMessage.channelId) {

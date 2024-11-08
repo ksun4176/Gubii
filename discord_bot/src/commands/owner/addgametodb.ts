@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { BaseChatInputCommand, CommandLevel } from '../../utils/structures/BaseChatInputCommand';
-import { Prisma } from "@prisma/client";
-import { UserRoleType } from "../../helpers/DatabaseHelper";
+import { Prisma, UserRoleType } from "@prisma/client";
+import { writeToLogChannel } from "../../helpers/ChannelHelper";
 
 const options = {
   name: 'name',
@@ -32,7 +32,8 @@ export default class AddGameToDBCommand extends BaseChatInputCommand {
     try {
       const { prisma, caller, databaseHelper } = await this.GetHelpers(interaction.user);
 
-      const server = await databaseHelper.getServer(discordServer);
+      const server = await databaseHelper.getServer(interaction.client, discordServer);
+      if (!server) return;
       const discordCaller = await discordServer.members.fetch(caller.discordId!);
       // check if server owner OR admin
       const roles: Prisma.UserRoleWhereInput[] = [
@@ -54,6 +55,7 @@ export default class AddGameToDBCommand extends BaseChatInputCommand {
       let message = `Game '${game.name}' is added to the database\n`;
       console.log(message);
       await interaction.editReply(message);
+      await writeToLogChannel(discordServer, server, message);
     }
     catch (error) {
       console.error(error);

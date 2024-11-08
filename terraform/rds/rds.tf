@@ -63,18 +63,18 @@ data "aws_ami" "amazon_linux_2" {
   }
 }
 
-# # Jump Box
-# resource "aws_instance" "bastion" {
-#   ami                     = data.aws_ami.amazon_linux_2.id
-#   instance_type           = "t2.micro"
-#   key_name                = var.sshkey_name
-#   vpc_security_group_ids  = [aws_security_group.allow_ssh.id]
-#   subnet_id               = element(var.public_subnets, 0)
+# Jump Box
+resource "aws_instance" "bastion" {
+  ami                     = data.aws_ami.amazon_linux_2.id
+  instance_type           = "t2.micro"
+  key_name                = var.sshkey_name
+  vpc_security_group_ids  = [aws_security_group.allow_ssh.id]
+  subnet_id               = element(var.public_subnets, 0)
 
-#   tags = {
-#     Name = "bastion"
-#   }
-# }
+  tags = {
+    Name = "bastion"
+  }
+}
 
 # Subnet Group 
 resource "aws_db_subnet_group" "rds_subnets" {

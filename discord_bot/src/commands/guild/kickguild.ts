@@ -1,7 +1,7 @@
 import { ActionRowBuilder, AutocompleteInteraction, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { BaseChatInputCommand, CommandLevel } from '../../utils/structures/BaseChatInputCommand';
-import { Prisma } from "@prisma/client";
-import { UserRoleType } from "../../helpers/DatabaseHelper";
+import { Prisma, UserRoleType } from "@prisma/client";
+import { writeToLogChannel } from "../../helpers/ChannelHelper";
 
 const options = {
   user: 'user',
@@ -81,7 +81,8 @@ export default class KickGuildCommand extends BaseChatInputCommand {
         try {
           const { prisma, caller, databaseHelper } = await this.GetHelpers(interaction.user);
 
-          const server = await databaseHelper.getServer(discordServer);
+          const server = await databaseHelper.getServer(interaction.client, discordServer);
+          if (!server) return;
           const user = await databaseHelper.getUser(userInfo);
 
           const discordCaller = await discordServer.members.fetch(caller.discordId!);
@@ -152,7 +153,7 @@ export default class KickGuildCommand extends BaseChatInputCommand {
           }
           console.log(message);
           await interaction.editReply({ content: message, components: [] });
-          await databaseHelper.writeToLogChannel(discordServer, server.id, message);
+          await writeToLogChannel(discordServer, server, message);
         }
         catch (error) {
           console.error(error);
@@ -166,15 +167,14 @@ export default class KickGuildCommand extends BaseChatInputCommand {
   }
 
   override async autocomplete(interaction: AutocompleteInteraction) {
-    if (!interaction.guild) {
-      return;
-    }
+    if (!interaction.guild) return;
     const discordServer = interaction.guild;
     const focusedOption = interaction.options.getFocused(true);
     
     try {
       const { prisma, databaseHelper } = await this.GetHelpers(interaction.user);
-      const server = await databaseHelper.getServer(discordServer);
+      const server = await databaseHelper.getServer(interaction.client, discordServer);
+      if (!server) return;
       
       switch (focusedOption.name) {
         case options.game:
@@ -187,7 +187,7 @@ export default class KickGuildCommand extends BaseChatInputCommand {
           const gameId = interaction.options.getInteger(options.game)!;
           const guilds = await prisma.guild.findMany({
             where: {
-              server: server,
+              serverId: server.id,
               gameId: gameId,
               guildId: { not: '' }, // not shared guild
               active: true   

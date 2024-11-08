@@ -1,7 +1,7 @@
 import { AutocompleteInteraction, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { BaseChatInputCommand, CommandLevel } from '../../utils/structures/BaseChatInputCommand';
-import { Prisma } from "@prisma/client";
-import { UserRoleType } from "../../helpers/DatabaseHelper";
+import { Prisma, UserRoleType } from "@prisma/client";
+import { writeToLogChannel } from "../../helpers/ChannelHelper";
 
 const options = {
   game: 'game',
@@ -62,7 +62,8 @@ export default class CreateGuildCommand extends BaseChatInputCommand {
     try {
       const { prisma, caller, databaseHelper } = await this.GetHelpers(interaction.user);
       
-      const server = await databaseHelper.getServer(discordServer)
+      const server = await databaseHelper.getServer(interaction.client, discordServer);
+      if (!server) return;
       const discordCaller = await discordServer.members.fetch(caller.discordId!);
       // check if server owner OR admin
       const roles: Prisma.UserRoleWhereInput[] = [
@@ -122,7 +123,7 @@ export default class CreateGuildCommand extends BaseChatInputCommand {
 
       console.log(message);
       await interaction.editReply(message);
-      await databaseHelper.writeToLogChannel(discordServer, server.id, message);
+      await writeToLogChannel(discordServer, server, message);
     }
     catch (error) {
       console.error(error);
@@ -138,7 +139,8 @@ export default class CreateGuildCommand extends BaseChatInputCommand {
     
     try {
       const { databaseHelper } = await this.GetHelpers(interaction.user);
-      const server = await databaseHelper.getServer(discordServer);
+      const server = await databaseHelper.getServer(interaction.client, discordServer);
+      if (!server) return;
       const gameGuilds = await databaseHelper.getGameGuilds(server.id);
       await interaction.respond(
         gameGuilds.map(guild => ({ name: guild.game.name, value: guild.game.id })),

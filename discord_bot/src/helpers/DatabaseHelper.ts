@@ -1,29 +1,14 @@
-import { Guild, Prisma, PrismaClient, Server, User } from "@prisma/client";
-import { APIRole, Guild as DiscordServer, GuildMember, Role, User as DiscordUser, PermissionFlagsBits } from "discord.js";
+import { ChannelPurposeType, Guild, GuildEvent, Prisma, PrismaClient, Server, User, UserRoleType } from "@prisma/client";
+import { APIRole, Guild as DiscordServer, GuildMember, Role, User as DiscordUser, PermissionFlagsBits, Client } from "discord.js";
 
-export enum ChannelPurposeType {
-  Recruitment = 1,
-  Applicant = 2,
-  BotLog = 3
-}
+const serverInclude = Prisma.validator<Prisma.ServerInclude>()({
+  channels: true,
+});
 
-export enum UserRoleType {
-  ServerOwner = 1,
-  Administrator = 2,
-  GuildLead = 3,
-  GuildManagement = 4,
-  GuildMember = 5
-}
+export type ServerWithChannels = Prisma.ServerGetPayload<{
+  include: typeof serverInclude;
+}>;
 
-export enum ServerEvent {
-  ServerMemberAdd = 1
-}
-
-export enum GuildEvent {
-  Apply = 1,
-  Accept = 2,
-  Transfer = 3
-}
 
 export class DatabaseHelper {
   private __prisma: PrismaClient;
@@ -34,23 +19,65 @@ export class DatabaseHelper {
 
   //#region Server Helpers
   /**
-   * Get the server object 
-   * @param server Discord Server information
+   * Create a server object or update existing one 
+   * @param client Discord bot client
+   * @param discordServer Discord Server information
    * @returns The created DB server object
    */
-  public async getServer(server: DiscordServer) {
-    return await this.__prisma.server.upsert({
+  public async createServer(client: Client, discordServer: DiscordServer) {
+    const server = await this.__prisma.server.upsert({
       create: {
-        name: server.name,
-        discordId: server.id,
+        name: discordServer.name,
+        discordId: discordServer.id,
       },
       where: {
-        discordId: server.id
+        discordId: discordServer.id
       },
       update: {
-        name: server.name,
-      }
+        name: discordServer.name,
+      },
+      include: serverInclude
     });
+    if (server.active) {
+      client.servers.set(discordServer.id, server);
+      return server;
+    }
+    return null;
+  }
+
+  /**
+   * Get the server object 
+   * @param client Discord bot client
+   * @param discordServer Discord Server information
+   * @returns The DB server object
+   */
+  public async getServer(client: Client, discordServer: DiscordServer) {
+    let server: ServerWithChannels | null | undefined;
+    if (client.servers.has(discordServer.id)) {
+      server = client.servers.get(discordServer.id);
+    }
+    if (!server) {
+      server =  await this.__prisma.server.findUnique({
+        where: {
+          discordId: discordServer.id
+        },
+        include: serverInclude
+      });
+    }
+    if (!server) {
+      server = await this.__prisma.server.create({
+        data: {
+          name: discordServer.name,
+          discordId: discordServer.id
+        },
+        include: serverInclude
+      });
+    }
+    if (server.active) {
+      client.servers.set(discordServer.id, server);
+      return server;
+    }
+    return null;
   }
   
   /**
@@ -321,33 +348,6 @@ export class DatabaseHelper {
   }
   //#endregion User Helpers
 
-  //#region Channel Helpers
-  /**
-   * Write a message to the log channel if it exists.
-   * @param discordServer the discord server
-   * @param serverId the database server ID
-   * @param message the message to write
-   */
-  public async writeToLogChannel(discordServer: DiscordServer, serverId: number, message: string) {
-    try {
-      let logChannel = await this.__prisma.channelPurpose.findFirst({
-        where: {
-          serverId: serverId,
-          channelType: ChannelPurposeType.BotLog
-        }
-      });
-      if (logChannel) {
-        const discordLogChannel = await discordServer.channels.fetch(logChannel.discordId);
-        if (discordLogChannel && discordLogChannel.isTextBased()) {
-          await discordLogChannel.send(message);
-        }
-      }
-    }
-    catch (error) {
-      console.log(error);
-    }
-  }
-  //#endregion Channel Helpers
 
   //#region String formatting
   /**
@@ -359,10 +359,10 @@ export class DatabaseHelper {
    */
   public async getGuildApplication(server: Server, gameGuild: Guild, applicant: User) {
     const applicationText = await this.__prisma.guildMessage.findUnique({ where: {
-      serverId_guildId_eventId: {
+      serverId_guildId_event: {
         serverId: server.id,
         guildId: gameGuild!.id,
-        eventId: GuildEvent.Apply
+        event: GuildEvent.Apply
       }
     }});
     if (!applicationText) {

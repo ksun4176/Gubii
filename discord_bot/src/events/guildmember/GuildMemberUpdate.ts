@@ -1,6 +1,6 @@
 import { Events, GuildMember, PartialGuildMember } from "discord.js";
 import { BaseEvent } from '../../utils/structures/BaseEvent';
-import { UserRoleType } from "../../helpers/DatabaseHelper";
+import { UserRoleType } from "@prisma/client";
 
 export default class GuildMemberUpdateEvent extends BaseEvent<Events.GuildMemberUpdate> {
   constructor() {
@@ -28,7 +28,9 @@ export default class GuildMemberUpdateEvent extends BaseEvent<Events.GuildMember
     const { prisma, databaseHelper } = await this.GetHelpers();
             
     // get server + guild roles
-    const server = await databaseHelper.getServer(member.guild);
+    const discordServer = member.guild;
+    const server = await databaseHelper.getServer(discordServer.client, discordServer);
+    if (!server) return;
     const user = await databaseHelper.getUser(member.user);
     const gameGuilds = await databaseHelper.getGameGuilds(server.id);
     const guildRoles = await prisma.userRole.findMany({
@@ -37,7 +39,7 @@ export default class GuildMemberUpdateEvent extends BaseEvent<Events.GuildMember
         UserRoleType.GuildMember   
         ].map(roleType => { return { 
           roleType: roleType, 
-          server: server,
+          serverId: server.id,
         }; })
       },
       include: { guild: true }

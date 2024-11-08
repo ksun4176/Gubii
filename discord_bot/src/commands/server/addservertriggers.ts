@@ -1,7 +1,7 @@
 import { AutocompleteInteraction, ChannelType, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { BaseChatInputCommand, CommandLevel } from '../../utils/structures/BaseChatInputCommand';
-import { Prisma } from "@prisma/client";
-import { ServerEvent, UserRoleType } from "../../helpers/DatabaseHelper";
+import { Prisma, ServerEvent, UserRoleType } from "@prisma/client";
+import { writeToLogChannel } from "../../helpers/ChannelHelper";
 
 const options = {
   event: 'event',
@@ -13,7 +13,7 @@ export default class AddServerTriggersCommand extends BaseChatInputCommand {
     const data = new SlashCommandBuilder()
       .setName('addservertriggers')
       .setDescription('Add text to be sent based on actions triggered for the server')
-      .addIntegerOption(option => 
+      .addStringOption(option => 
         option.setName(options.event)
           .setDescription('event the trigger is for')
           .setRequired(true)
@@ -35,13 +35,14 @@ export default class AddServerTriggersCommand extends BaseChatInputCommand {
     }
     await interaction.deferReply();
     const discordServer = interaction.guild;
-    const eventId = interaction.options.getInteger(options.event)!;
+    const eventId = interaction.options.getString(options.event)! as ServerEvent;
     let channelInfo = interaction.options.getChannel(options.channel)!;
     let errorMessage = 'There was an issue adding the trigger.\n';
     try {
       const { prisma, caller, databaseHelper } = await this.GetHelpers(interaction.user);
 
-      const server = await databaseHelper.getServer(discordServer);
+      const server = await databaseHelper.getServer(interaction.client, discordServer);
+      if (!server) return;
       const discordCaller = await discordServer.members.fetch(caller.discordId!);
       // check if server owner OR admin
       const roles: Prisma.UserRoleWhereInput[] = [
@@ -56,9 +57,9 @@ export default class AddServerTriggersCommand extends BaseChatInputCommand {
 
       let message = '';
       let serverMessage = await prisma.serverMessage.findUnique({ where: {
-        serverId_eventId: {
+        serverId_event: {
           serverId: server.id,
-          eventId: eventId
+          event: eventId
         }
       }});
       if (serverMessage) {
@@ -83,14 +84,14 @@ export default class AddServerTriggersCommand extends BaseChatInputCommand {
         await prisma.serverMessage.upsert({
           create: {
             serverId: server.id,
-            eventId: eventId,
+            event: eventId,
             text: serverMessageText,
             channelId: channelInfo.id
           },
           where: {
-            serverId_eventId: {
+            serverId_event: {
               serverId: server.id,
-              eventId: eventId
+              event: eventId
             }
           },
           update: {
@@ -100,9 +101,9 @@ export default class AddServerTriggersCommand extends BaseChatInputCommand {
         });
         // display message
         const savedMessage = await prisma.serverMessage.findUniqueOrThrow({ where: {
-          serverId_eventId: {
+          serverId_event: {
             serverId: server.id,
-            eventId: eventId
+            event: eventId
           }
         }});
         message = `**Here is the now saved text:**\n`;
@@ -114,7 +115,7 @@ export default class AddServerTriggersCommand extends BaseChatInputCommand {
         message += `\n**Text will be sent to ${channelInfo} on event trigger.**\n`;
         console.log(message);
         await interaction.followUp(message);
-        await databaseHelper.writeToLogChannel(discordServer, server.id, message);
+        await writeToLogChannel(discordServer, server, message);
       }
       catch (error) {
         console.error(error);
@@ -129,10 +130,9 @@ export default class AddServerTriggersCommand extends BaseChatInputCommand {
 
   override async autocomplete(interaction: AutocompleteInteraction) {
     try {
-      const { prisma } = await this.GetHelpers(interaction.user);
-      let serverEvents = await prisma.serverEvent.findMany();
+      const serverEventKeys = Object.values(ServerEvent);
       await interaction.respond(
-        serverEvents.map(event => ({ name: event.name, value: event.id }))
+        serverEventKeys.map(event => ({ name: event, value: event }))
       );
     }
     catch (error) {

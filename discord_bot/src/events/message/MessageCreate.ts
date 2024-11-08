@@ -1,8 +1,8 @@
 import { Events, Message, OmitPartialGroupDMChannel } from "discord.js";
 import { BaseEvent } from '../../utils/structures/BaseEvent';
 import { getGuildApplyMessageInfo } from "../../helpers/ApplyHelper";
-import { ChannelPurposeType, UserRoleType } from "../../helpers/DatabaseHelper";
 import { forwardNewMessage } from "../../helpers/MessageHelper";
+import { ChannelPurposeType, UserRoleType } from "@prisma/client";
 
 export default class MessageCreateEvent extends BaseEvent<Events.MessageCreate> {
   constructor() {
@@ -18,9 +18,7 @@ export default class MessageCreateEvent extends BaseEvent<Events.MessageCreate> 
       try {
         const { prisma, databaseHelper } = await this.GetHelpers();
         const messageInfo = await getGuildApplyMessageInfo(prisma, databaseHelper, newMessage);
-        if (!messageInfo) {
-          return;
-        }
+        if (!messageInfo) return;
         const { sourceChannel, targetChannel, targetThread } = messageInfo;
 
         // only forward newMessage if it mentions the bot

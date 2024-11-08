@@ -1,13 +1,15 @@
 import { AutocompleteInteraction, ChannelType, ChatInputCommandInteraction, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import { BaseChatInputCommand, CommandLevel } from '../../utils/structures/BaseChatInputCommand';
-import { Prisma } from "@prisma/client";
-import { ChannelPurposeType, UserRoleType } from "../../helpers/DatabaseHelper";
+import { ChannelPurposeType, Prisma, UserRoleType } from "@prisma/client";
+import { writeToLogChannel } from "../../helpers/ChannelHelper";
 
 const options = {
   game: 'game',
   managementrole: 'managementrole',
   memberrole: 'memberrole',
   channelscategory: 'channelscategory',
+  recruitchannel: 'recruitchannel',
+  applicantchannel: 'applicantchannel'
 }
 
 export default class AddGameCommand extends BaseChatInputCommand {
@@ -55,7 +57,8 @@ export default class AddGameCommand extends BaseChatInputCommand {
     try {
       const { caller, databaseHelper } = await this.GetHelpers(interaction.user);
 
-      const server = await databaseHelper.getServer(discordServer);
+      const server = await databaseHelper.getServer(interaction.client, discordServer);
+      if (!server) return;
       const discordCaller = await discordServer.members.fetch(caller.discordId!);
       // check if server owner OR admin
       const roles: Prisma.UserRoleWhereInput[] = [
@@ -88,7 +91,7 @@ export default class AddGameCommand extends BaseChatInputCommand {
         throw error;
       }
 
-      const recruitChannelInfo = await discordServer.channels.create({
+      const recruitChannel = await discordServer.channels.create({
         name: `${gameGuild.name} recruitment`,
         topic: `Recruitment channel for ${gameGuild.name}`,
         type: ChannelType.GuildText,
@@ -104,10 +107,10 @@ export default class AddGameCommand extends BaseChatInputCommand {
           }
         ],
       });
-      const recruitThread = await databaseHelper.createGameChannel(gameGuild, ChannelPurposeType.Recruitment, recruitChannelInfo.id);
+      const recruitThread = await databaseHelper.createGameChannel(gameGuild, ChannelPurposeType.Recruitment, recruitChannel.id);
       message += `- Recruitment thread: <#${recruitThread!.discordId}>\n`;
 
-      const applicantChannelInfo = await discordServer.channels.create({
+      const applicantChannel = await discordServer.channels.create({
         name: `${gameGuild.name} applicants`,
         topic: `Applicants channel for ${gameGuild.name}`,
         type: ChannelType.GuildText,
@@ -119,13 +122,13 @@ export default class AddGameCommand extends BaseChatInputCommand {
           }
         ],
       });
-      const applicantChannel = await databaseHelper.createGameChannel(gameGuild, ChannelPurposeType.Applicant, applicantChannelInfo.id);
-      message += `- Applicant thread: <#${applicantChannel!.discordId}>\n`;
+      const applicantThread = await databaseHelper.createGameChannel(gameGuild, ChannelPurposeType.Applicant, applicantChannel.id);
+      message += `- Applicant thread: <#${applicantThread!.discordId}>\n`;
 
       console.log(message);
       message += `You can now call /createguild to add guilds for this game.\n **(Recommended)** You can also call /addgametriggers to set up the application for the game`
       await interaction.editReply(message);
-      await databaseHelper.writeToLogChannel(discordServer, server.id, message);
+      await writeToLogChannel(discordServer, server, message);
     }
     catch (error) {
       console.error(error);

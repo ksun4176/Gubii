@@ -14,13 +14,17 @@ datasource db {
 }
 
 // Purpose of a channel
+enum ChannelPurposeType {
+  Recruitment
+  Applicant
+  BotLog
+}
 model ChannelPurpose {
   id          Int                @id @default(autoincrement())
   // discord ID linked to channel
   discordId   String             @map("discord_id") @db.VarChar(255)
   // foreign key to type of channel purpose
-  channelType Int                @map("channel_type")
-  type        ChannelPurposeType @relation(fields: [channelType], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "channel_purpose_type_fk")
+  channelType ChannelPurposeType @map("channel_type")
   // foreign key to server channel belongs to
   serverId    Int                @map("server_id")
   server      Server             @relation(fields: [serverId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "channel_purpose_server_fk")
@@ -30,17 +34,6 @@ model ChannelPurpose {
 
   @@unique([channelType, serverId, guildId], map: "uc_channel_purpose")
   @@map("channel_purpose")
-}
-
-// Purposes for a channel to have
-model ChannelPurposeType {
-  id    Int    @id @default(autoincrement())
-  // name of channel purpose type
-  name  String @db.VarChar(255)
-  // all channels that map to the type
-  roles ChannelPurpose[]
-
-  @@map("channel_purpose_type")
 }
 
 // Information about the game the guild is for
@@ -104,35 +97,28 @@ model GuildApplicant {
   @@map("guild_applicant")
 }
 
-// Event in guild that can trigger a message
-model GuildEvent {
-  id    Int    @id @default(autoincrement())
-  // name of event
-  name  String @db.VarChar(255)
-  // all guild messages that map to the event
-  messages GuildMessage[]
-
-  @@map("guild_event")
-}
-
 // Message to send in server for a guild
+enum GuildEvent {
+  Apply
+  Accept
+  Transfer
+}
 model GuildMessage {
-  id        Int         @id @default(autoincrement())
+  id        Int     @id @default(autoincrement())
   // foreign key to server message belongs to
-  serverId  Int         @map("server_id")
-  server    Server      @relation(fields: [serverId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "g_server_message_fk")
+  serverId  Int     @map("server_id")
+  server    Server  @relation(fields: [serverId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "g_server_message_fk")
   // foreign key to guild user applied to
-  guildId   Int         @map("guild_id")
-  guild     Guild       @relation(fields: [guildId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "guild_message_fk")
+  guildId   Int     @map("guild_id")
+  guild     Guild   @relation(fields: [guildId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "guild_message_fk")
   // event that triggers this message
-  eventId   Int         @map("event_id")
-  event     GuildEvent  @relation(fields: [eventId], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "guild_message_event_fk")
+  event     GuildEvent
   // text to show when event happens
-  text      String      @db.LongText
+  text      String  @db.LongText
   // discord channel for message to show up in
-  channelId String?     @map("channel_id")
+  channelId String? @map("channel_id")
 
-  @@unique([serverId, guildId, eventId], map: "uc_guild_message")
+  @@unique([serverId, guildId, event], map: "uc_guild_message")
   @@map("guild_message")
 }
 
@@ -163,32 +149,23 @@ model Server {
   @@map("server")
 }
 
-// Event in server that can trigger a message
-model ServerEvent {
-  id    Int    @id @default(autoincrement())
-  // name of event
-  name  String @db.VarChar(255)
-  // all server messages that map to the event
-  messages ServerMessage[]
-
-  @@map("server_event")
-}
-
 // Message to send in server
+enum ServerEvent {
+  ServerMemberAdd
+}
 model ServerMessage {
-  id        Int         @id @default(autoincrement())
+  id        Int     @id @default(autoincrement())
   // foreign key to server message belongs to
-  serverId  Int         @map("server_id")
-  server    Server      @relation(fields: [serverId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "server_message_fk")
+  serverId  Int     @map("server_id")
+  server    Server  @relation(fields: [serverId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "server_message_fk")
   // event that triggers this message
-  eventId   Int         @map("event_id")
-  event     ServerEvent @relation(fields: [eventId], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "server_message_event_fk")
+  event     ServerEvent
   // text to show when event happens
-  text      String      @db.LongText
+  text      String  @db.LongText
   // discord channel for message to show up in
-  channelId String?     @map("channel_id")
+  channelId String? @map("channel_id")
 
-  @@unique([serverId, eventId], map: "uc_server_message")
+  @@unique([serverId, event], map: "uc_server_message")
   @@map("server_message")
 }
 
@@ -226,35 +203,30 @@ model UserRelation {
 }
 
 // Which roles correspond with which user_role_type
+enum UserRoleType {
+  ServerOwner
+  Administrator
+  GuildLead
+  GuildManagement
+  GuildMember
+}
 model UserRole {
-  id        Int           @id @default(autoincrement())
+  id        Int          @id @default(autoincrement())
   // name of user role
-  name      String        @db.VarChar(255)
+  name      String       @db.VarChar(255)
   // foreign key to type of user role
-  roleType  Int?          @map("role_type")
-  type      UserRoleType? @relation(fields: [roleType], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "user_role_type_fk")
+  roleType  UserRoleType @map("role_type")
   // foreign key to server user role belongs to
-  serverId  Int           @map("server_id")
-  server    Server        @relation(fields: [serverId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "user_role_server_fk")
+  serverId  Int          @map("server_id")
+  server    Server       @relation(fields: [serverId], references: [id], onDelete: NoAction, onUpdate: Cascade, map: "user_role_server_fk")
   // foreign key to guild user role belongs to
-  guildId   Int?          @map("guild_id")
-  guild     Guild?        @relation(fields: [guildId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "user_role_guild_fk")
+  guildId   Int?         @map("guild_id")
+  guild     Guild?       @relation(fields: [guildId], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "user_role_guild_fk")
   // discord ID linked to role. Let it be null in case there is no discord set up
-  discordId String?       @map("discord_id") @unique(map: "uc_user_role") @db.VarChar(255)
+  discordId String?      @map("discord_id") @unique(map: "uc_user_role") @db.VarChar(255)
   // which users has this role
   users     UserRelation[]
 
   @@unique([roleType, serverId, guildId], map: "uc_user_role_2")
   @@map("user_role")
-}
-
-// Roles users can have in the server/guild.
-model UserRoleType {
-  id    Int    @id @default(autoincrement())
-  // name of user role type
-  name  String @db.VarChar(255)
-  // all roles that map to the type
-  roles UserRole[]
-
-  @@map("user_role_type")
 }

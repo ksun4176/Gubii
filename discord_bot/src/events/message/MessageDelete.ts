@@ -1,8 +1,8 @@
 import { Events, Message, OmitPartialGroupDMChannel, PartialMessage } from "discord.js";
 import { BaseEvent } from '../../utils/structures/BaseEvent';
 import { getGuildApplyMessageInfo } from "../../helpers/ApplyHelper";
-import { ChannelPurposeType } from "../../helpers/DatabaseHelper";
 import { findForwardedMessage } from "../../helpers/MessageHelper";
+import { ChannelPurposeType } from "@prisma/client";
 
 export default class MessageDeleteEvent extends BaseEvent<Events.MessageDelete> {
   constructor() {
@@ -18,9 +18,7 @@ export default class MessageDeleteEvent extends BaseEvent<Events.MessageDelete> 
       try {
         const { prisma, databaseHelper } = await this.GetHelpers();
         const messageInfo = await getGuildApplyMessageInfo(prisma, databaseHelper, message);
-        if (!messageInfo) {
-          return;
-        }
+        if (!messageInfo) return;
         const { sourceChannel, targetThread } = messageInfo;
 
         try {

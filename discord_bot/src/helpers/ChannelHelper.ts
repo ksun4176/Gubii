@@ -1,5 +1,6 @@
-import { User } from "@prisma/client";
-import { AnyThreadChannel, ChannelType, TextChannel, ThreadAutoArchiveDuration } from "discord.js";
+import { ChannelPurposeType, User } from "@prisma/client";
+import { AnyThreadChannel, ChannelType, Guild as DiscordServer, TextChannel, ThreadAutoArchiveDuration } from "discord.js";
+import { ServerWithChannels } from "./DatabaseHelper";
 
 /**
  * Find or create the thread in a discord channel that is linked to a user.
@@ -29,4 +30,26 @@ export async function getChannelThread(channel: TextChannel, user: User) {
     });
   }
   return thread;
+}
+
+/**
+ * Write a message to the log channel if it exists.
+ * @param server the database server
+ * @param message the message to write
+ */
+export async function writeToLogChannel(discordServer: DiscordServer, server: ServerWithChannels, message: string) {
+  try {
+    const logChannel = server.channels.find((channel) => {
+      channel.channelType === ChannelPurposeType.BotLog
+    });
+    if (logChannel) {
+      const discordLogChannel = await discordServer.channels.fetch(logChannel.discordId);
+      if (discordLogChannel?.isTextBased()) {
+        await discordLogChannel.send(message);
+      }
+    }
+  }
+  catch (error) {
+    console.log(error);
+  }
 }

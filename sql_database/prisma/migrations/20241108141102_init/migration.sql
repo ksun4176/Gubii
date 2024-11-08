@@ -2,19 +2,11 @@
 CREATE TABLE `channel_purpose` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `discord_id` VARCHAR(255) NOT NULL,
-    `channel_type` INTEGER NOT NULL,
+    `channel_type` ENUM('Recruitment', 'Applicant', 'BotLog') NOT NULL,
     `server_id` INTEGER NOT NULL,
     `guild_id` INTEGER NULL,
 
     UNIQUE INDEX `uc_channel_purpose`(`channel_type`, `server_id`, `guild_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `channel_purpose_type` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `name` VARCHAR(255) NOT NULL,
-
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -53,23 +45,15 @@ CREATE TABLE `guild_applicant` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `guild_event` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `name` VARCHAR(255) NOT NULL,
-
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
 CREATE TABLE `guild_message` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `server_id` INTEGER NOT NULL,
     `guild_id` INTEGER NOT NULL,
-    `event_id` INTEGER NOT NULL,
+    `event` ENUM('Apply', 'Accept', 'Transfer') NOT NULL,
     `text` LONGTEXT NOT NULL,
     `channel_id` VARCHAR(191) NULL,
 
-    UNIQUE INDEX `uc_guild_message`(`server_id`, `guild_id`, `event_id`),
+    UNIQUE INDEX `uc_guild_message`(`server_id`, `guild_id`, `event`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -86,22 +70,14 @@ CREATE TABLE `server` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `server_event` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `name` VARCHAR(255) NOT NULL,
-
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
 CREATE TABLE `server_message` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `server_id` INTEGER NOT NULL,
-    `event_id` INTEGER NOT NULL,
+    `event` ENUM('ServerMemberAdd') NOT NULL,
     `text` LONGTEXT NOT NULL,
     `channel_id` VARCHAR(191) NULL,
 
-    UNIQUE INDEX `uc_server_message`(`server_id`, `event_id`),
+    UNIQUE INDEX `uc_server_message`(`server_id`, `event`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -132,7 +108,7 @@ CREATE TABLE `user_relation` (
 CREATE TABLE `user_role` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(255) NOT NULL,
-    `role_type` INTEGER NULL,
+    `role_type` ENUM('ServerOwner', 'Administrator', 'GuildLead', 'GuildManagement', 'GuildMember') NOT NULL,
     `server_id` INTEGER NOT NULL,
     `guild_id` INTEGER NULL,
     `discord_id` VARCHAR(255) NULL,
@@ -141,17 +117,6 @@ CREATE TABLE `user_role` (
     UNIQUE INDEX `uc_user_role_2`(`role_type`, `server_id`, `guild_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `user_role_type` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `name` VARCHAR(255) NOT NULL,
-
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- AddForeignKey
-ALTER TABLE `channel_purpose` ADD CONSTRAINT `channel_purpose_type_fk` FOREIGN KEY (`channel_type`) REFERENCES `channel_purpose_type`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `channel_purpose` ADD CONSTRAINT `channel_purpose_server_fk` FOREIGN KEY (`server_id`) REFERENCES `server`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
@@ -184,22 +149,13 @@ ALTER TABLE `guild_message` ADD CONSTRAINT `g_server_message_fk` FOREIGN KEY (`s
 ALTER TABLE `guild_message` ADD CONSTRAINT `guild_message_fk` FOREIGN KEY (`guild_id`) REFERENCES `guild`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `guild_message` ADD CONSTRAINT `guild_message_event_fk` FOREIGN KEY (`event_id`) REFERENCES `guild_event`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE `server_message` ADD CONSTRAINT `server_message_fk` FOREIGN KEY (`server_id`) REFERENCES `server`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `server_message` ADD CONSTRAINT `server_message_event_fk` FOREIGN KEY (`event_id`) REFERENCES `server_event`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `user_relation` ADD CONSTRAINT `user_relation_user_fk` FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `user_relation` ADD CONSTRAINT `user_relation_role_fk` FOREIGN KEY (`role_id`) REFERENCES `user_role`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `user_role` ADD CONSTRAINT `user_role_type_fk` FOREIGN KEY (`role_type`) REFERENCES `user_role_type`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `user_role` ADD CONSTRAINT `user_role_server_fk` FOREIGN KEY (`server_id`) REFERENCES `server`(`id`) ON DELETE NO ACTION ON UPDATE CASCADE;

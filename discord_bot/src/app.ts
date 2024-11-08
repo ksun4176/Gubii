@@ -5,12 +5,15 @@ import { bindCommands, bindButtons, bindEvents } from "./utils/register";
 import { BaseChatInputCommand } from "./utils/structures/BaseChatInputCommand";
 import { BaseEvent } from "./utils/structures/BaseEvent";
 import { BaseButton } from "./utils/structures/BaseButton";
+import { ServerWithChannels } from "./helpers/DatabaseHelper";
+
 // augment client with the command property
 declare module "discord.js" {
 	interface Client {
     chatInputCommands: Collection<string, BaseChatInputCommand>
     events: Collection<string, BaseEvent<any>>
     buttons: Collection<string, BaseButton>
+		servers: Collection<string, ServerWithChannels>
 	}
 }
 dotenv.config();
@@ -35,6 +38,7 @@ const main = async () => {
 	client.chatInputCommands = new Collection();
   client.events = new Collection();
   client.buttons = new Collection();
+  client.servers = new Collection();
 
 	await bindCommands(client)
   await bindEvents(client, "../events");

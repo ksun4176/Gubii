@@ -1,8 +1,9 @@
 import { ActionRowBuilder, AnyThreadChannel, AutocompleteInteraction, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, DiscordAPIError, RESTJSONErrorCodes, SlashCommandBuilder } from "discord.js";
 import { BaseChatInputCommand, CommandLevel } from '../../utils/structures/BaseChatInputCommand';
-import { Prisma, PrismaClient, Server, User } from "@prisma/client";
-import { ChannelPurposeType, DatabaseHelper, GuildEvent, UserRoleType } from "../../helpers/DatabaseHelper";
+import { ChannelPurposeType, GuildEvent, Prisma, PrismaClient, User, UserRoleType } from "@prisma/client";
+import { DatabaseHelper, ServerWithChannels } from "../../helpers/DatabaseHelper";
 import { applyToGuild, getGuildApplyInteractionInfo } from "../../helpers/ApplyHelper";
+import { writeToLogChannel } from "../../helpers/ChannelHelper";
 
 const subcommands = {
   accept: 'accept',
@@ -81,7 +82,8 @@ export default class ApplicationCommand extends BaseChatInputCommand {
     const subcommand = interaction.options.getSubcommand();
     try {
       const { prisma, caller, databaseHelper } = await this.GetHelpers(interaction.user);
-      const server = await databaseHelper.getServer(interaction.guild);
+      const server = await databaseHelper.getServer(interaction.client, interaction.guild);
+      if (!server) return;
       switch (subcommand) {
         case subcommands.accept:
           await this.__acceptAction(interaction, server, prisma, caller, databaseHelper);
@@ -115,8 +117,8 @@ export default class ApplicationCommand extends BaseChatInputCommand {
     
     try {
       const { prisma, databaseHelper } = await this.GetHelpers(interaction.user);
-      const server = await databaseHelper.getServer(discordServer);
-      
+      const server = await databaseHelper.getServer(interaction.client, discordServer);
+      if (!server) return;
       switch (focusedOption.name) {
         case options.game:
           let gameGuilds = await databaseHelper.getGameGuilds(server.id);
@@ -132,7 +134,7 @@ export default class ApplicationCommand extends BaseChatInputCommand {
           const gameId = interaction.options.getInteger(options.game)!;
           const guilds = await prisma.guild.findMany({
             where: {
-              server: server,
+              serverId: server.id,
               gameId: gameId,
               guildId: { not: '' }, // not shared guild
               active: true   
@@ -161,7 +163,7 @@ export default class ApplicationCommand extends BaseChatInputCommand {
    */
   private async __acceptAction(
     interaction: ChatInputCommandInteraction,
-    server: Server,
+    server: ServerWithChannels,
     prisma: PrismaClient,
     caller: User,
     databaseHelper: DatabaseHelper
@@ -237,7 +239,7 @@ export default class ApplicationCommand extends BaseChatInputCommand {
     if (targetThread) {
       await targetThread.send(`You have been accepted to ${guild.name}!`);
     }
-    await databaseHelper.writeToLogChannel(discordServer, guild.serverId, message);
+    await writeToLogChannel(discordServer, server, message);
     
     // find what guilds user is currently in so user can clean them all up if need be
     let currentGuilds = await prisma.userRole.findMany({
@@ -298,11 +300,11 @@ export default class ApplicationCommand extends BaseChatInputCommand {
       }
     }
     const gameGuild = await databaseHelper.getGameGuild(guild);
-    const savedMessage = await prisma.guildMessage.findUniqueOrThrow({ where: {
-      serverId_guildId_eventId: {
+    const savedMessage = await prisma.guildMessage.findUnique({ where: {
+      serverId_guildId_event: {
         serverId: server.id,
         guildId: gameGuild!.id,
-        eventId: transferred ? GuildEvent.Transfer : GuildEvent.Accept
+        event: transferred ? GuildEvent.Transfer : GuildEvent.Accept
       }
     }});
     if (savedMessage?.channelId) {
@@ -326,7 +328,7 @@ export default class ApplicationCommand extends BaseChatInputCommand {
   */
   private async __declineAction(
     interaction: ChatInputCommandInteraction,
-    server: Server,
+    server: ServerWithChannels,
     prisma: PrismaClient,
     caller: User,
     databaseHelper: DatabaseHelper,
@@ -369,7 +371,7 @@ export default class ApplicationCommand extends BaseChatInputCommand {
       await interaction.channel.setArchived(true);
     }
     await targetThread.send('This application was declined. Feel free to apply again in the future.');
-    await databaseHelper.writeToLogChannel(discordServer, server.id, message);
+    await writeToLogChannel(discordServer, server, message);
     return true;
   }
 }

@@ -40,10 +40,7 @@ export default class InteractionCreateEvent extends BaseEvent<Events.Interaction
     else if (interaction.isButton()) {
       const button = interaction.client.buttons.get(interaction.customId);
       try {
-        if (!button) {
-          throw new Error(`No button interaction matching ${interaction.customId} was found`);
-        }
-        await button.execute(interaction);
+        await button?.execute(interaction);
       }
       catch (error) {
         console.error(error);
