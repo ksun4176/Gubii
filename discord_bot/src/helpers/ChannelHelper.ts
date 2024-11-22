@@ -39,9 +39,7 @@ export async function getChannelThread(channel: TextChannel, user: User) {
  */
 export async function writeToLogChannel(discordServer: DiscordServer, server: ServerWithChannels, message: string) {
   try {
-    const logChannel = server.channels.find((channel) => {
-      channel.channelType === ChannelPurposeType.BotLog
-    });
+    const logChannel = server.channels.find(channel => channel.channelType === ChannelPurposeType.BotLog);
     if (logChannel) {
       const discordLogChannel = await discordServer.channels.fetch(logChannel.discordId);
       if (discordLogChannel?.isTextBased()) {

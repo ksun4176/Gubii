@@ -69,9 +69,7 @@ export default class UpdateServerCommand extends BaseChatInputCommand {
       message += `- Owner: <@${caller.discordId}>\n`;
 
       // log channel
-      let logChannel = server.channels.find((channel) => {
-        channel.channelType === ChannelPurposeType.BotLog
-      });
+      let logChannel = server.channels.find(channel => channel.channelType === ChannelPurposeType.BotLog);
       if (logChannelInfo) {
         if (logChannel) {
           logChannel = await prisma.channelPurpose.update({

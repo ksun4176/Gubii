@@ -1,6 +1,7 @@
 import { Events, GuildMember, PartialGuildMember } from "discord.js";
 import { BaseEvent } from '../../utils/structures/BaseEvent';
 import { UserRoleType } from "@prisma/client";
+import { writeToLogChannel } from "../../helpers/ChannelHelper";
 
 export default class GuildMemberUpdateEvent extends BaseEvent<Events.GuildMemberUpdate> {
   constructor() {
@@ -106,19 +107,26 @@ export default class GuildMemberUpdateEvent extends BaseEvent<Events.GuildMember
         rolesToAdd.push(roleId);
       }
     }
-    if (rolesToAdd.length > 0) {
-      await member.roles.add(rolesToAdd);
-      console.log(`User ${user.name} added these roles: ${rolesToAdd}`);
-    }
     const rolesToRemove: string[] = [];
     for (let roleId of currentSharedRoles) {
       if (!sharedRolesToHave.has(roleId)) {
         rolesToRemove.push(roleId);
       }
     }
-    if (rolesToRemove.length > 0) {
-      await member.roles.remove(rolesToRemove);
-      console.log(`User ${user.name} removed these roles: ${rolesToRemove}`);
+    try {
+      if (rolesToAdd.length > 0) {
+        await member.roles.add(rolesToAdd);
+        console.log(`User ${user.name} added these roles: ${rolesToAdd}`);
+      }
+      if (rolesToRemove.length > 0) {
+        await member.roles.remove(rolesToRemove);
+        console.log(`User ${user.name} removed these roles: ${rolesToRemove}`);
+      }
+    }
+    catch (error) {
+      const errorMessage = `Bot cannot assign shared role. Check Server Settings > Roles that its role is higher on the list`;
+      await writeToLogChannel(discordServer, server, errorMessage);
+      throw error;
     }
   }
 }
