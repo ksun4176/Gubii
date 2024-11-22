@@ -2,7 +2,7 @@ import { ChatInputCommandInteraction, PermissionFlagsBits, Role, SlashCommandBui
 import { BaseChatInputCommand, CommandLevel } from '../../utils/structures/BaseChatInputCommand';
 import { ChannelPurposeType } from "@prisma/client";
 
-export default class UpdateServerCommand extends BaseChatInputCommand {
+export default class GetServerInfoCommand extends BaseChatInputCommand {
   constructor() {
     const data = new SlashCommandBuilder()
       .setName('getserverinfo')
@@ -24,10 +24,10 @@ export default class UpdateServerCommand extends BaseChatInputCommand {
       const server = await databaseHelper.getServer(interaction.client, discordServer);
       if (!server) return;
 
-      let message = `**${server.name}**:\n`;
+      let message = `**${server.name}**\n`;
 
       const owner = await discordServer.fetchOwner();
-      message += `- Owner: <@${owner.id}>\n`;
+      message += `Owner: ${owner}\n`;
 
       const serverRoles = await discordServer.roles.fetch();
       const adminRoles: Role[] = [];
@@ -37,12 +37,12 @@ export default class UpdateServerCommand extends BaseChatInputCommand {
         }
       });
       if (adminRoles.length > 0) {
-        message += `- Admin roles: ${adminRoles.map(role => `<@&${role.id}>`).join(', ')}\n`;
+        message += `Admin roles: ${adminRoles.map(role => `${role}`).join(', ')}\n`;
       }
 
       const logChannel = server.channels.find(channel => channel.channelType === ChannelPurposeType.BotLog);
       if (logChannel) {
-        message += `- Log channel: <#${logChannel.discordId}>\n`;
+        message += `Log channel: <#${logChannel.discordId}>\n`;
       }
 
       const gameGuilds = await databaseHelper.getGameGuilds(server.id);
@@ -50,7 +50,7 @@ export default class UpdateServerCommand extends BaseChatInputCommand {
         where: {
           serverId: server.id,
           game: { OR: gameGuilds.map(guild => { return { id: guild.gameId}; }) },
-          guildId: { not: ''},
+          guildId: { not: '' }, // not shared guild
           active: true
         }
       });
@@ -62,14 +62,14 @@ export default class UpdateServerCommand extends BaseChatInputCommand {
         const guilds = guildsMap.get(guild.gameId)!;
         guilds.push(guild);
       }
-      message += `- Games played here:\n`
+      message += `Games played here:\n`
       for (const gameGuild of gameGuilds) {
         const guilds = guildsMap.get(gameGuild.gameId);
         if (guilds) {
-          message += `  - **${gameGuild.game.name}** (${guilds.length}) : ${guilds.map(guild => guild.name).join(', ')}\n`;
+          message += `- **${gameGuild.game.name}** (${guilds.length}) : ${guilds.map(guild => guild.name).join(', ')}\n`;
         }
         else {
-          message += `  - **${gameGuild.game.name}** (0)\n`;
+          message += `- **${gameGuild.game.name}** (0)\n`;
         }
       }
 

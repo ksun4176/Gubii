@@ -70,7 +70,14 @@ Can only be done by Guild Management
 2. To accept an application, run `/application accept`
 3. To decline an application, run `/application decline`
 
-## Other Guild Actions
+## Apply to a Guild
+Can be done by anyone
+1. Run `/application apply`
+   - You can specify a guild to apply to directly
+2. An application thread will be spawned
+3. Messages will be reacted with ✅ or ❌ to let you know if they were sent
+
+## Other Commands
 ### Transferring Members
 Can only be done by Guild Management
 1. Run `/application accept` to transfer user to new guild
@@ -81,12 +88,9 @@ Can only be done by Guild Management
 1. Run `/kickguild` to kick a user from guilds
    - You can specify just a single guild if needed
 
-## Apply to a Guild
-Can be done by anyone
-1. Run `/application apply`
-   - You can specify a guild to apply to directly
-2. An application thread will be spawned
-3. Messages will be reacted with ✅ or ❌ to let you know if they were sent
+### Getting information
+1. Run `/getserverinfo` to get server information
+2. Run `/getguildinfo` to get guild information. Can only be done by Guild Management.
 
 ## Premium Functionality
 1. To become a premium server, go to https://discord.gg/UEWzKAu3 and talk to any admin
