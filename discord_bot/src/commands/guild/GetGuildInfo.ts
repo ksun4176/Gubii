@@ -70,13 +70,13 @@ export default class GetGuildInfoCommand extends BaseChatInputCommand {
       const managementRole = guildRoles.find(role => role.roleType === UserRoleType.GuildManagement)!;
       const discordManagementRole = await discordServer.roles.fetch(managementRole.discordId!);
       if (discordManagementRole) {
-        message += `${discordManagementRole}: ${discordManagementRole.members.map(member => `${member}`).join(', ')}\n`;
+        message += `- ${discordManagementRole}: ${discordManagementRole.members.map(member => `${member}`).join(', ')}\n`;
       }
       
       const memberRole = guildRoles.find(role => role.roleType === UserRoleType.GuildMember)!;
       const discordMemberRole = await discordServer.roles.fetch(memberRole.discordId!);
       if (discordMemberRole) {
-        message += `${discordMemberRole} (${discordMemberRole.members.size}) :\n${discordMemberRole.members.map(member => `- ${member}`).join('\n')}`;
+        message += `- ${discordMemberRole} (${discordMemberRole.members.size}) :\n${discordMemberRole.members.map(member => `  - ${member}`).join('\n')}`;
       }
 
       await interaction.editReply(message);

@@ -27,7 +27,7 @@ export default class GetServerInfoCommand extends BaseChatInputCommand {
       let message = `**${server.name}**\n`;
 
       const owner = await discordServer.fetchOwner();
-      message += `Owner: ${owner}\n`;
+      message += `- Owner: ${owner}\n`;
 
       const serverRoles = await discordServer.roles.fetch();
       const adminRoles: Role[] = [];
@@ -37,12 +37,12 @@ export default class GetServerInfoCommand extends BaseChatInputCommand {
         }
       });
       if (adminRoles.length > 0) {
-        message += `Admin roles: ${adminRoles.map(role => `${role}`).join(', ')}\n`;
+        message += `- Admin roles: ${adminRoles.map(role => `${role}`).join(', ')}\n`;
       }
 
       const logChannel = server.channels.find(channel => channel.channelType === ChannelPurposeType.BotLog);
       if (logChannel) {
-        message += `Log channel: <#${logChannel.discordId}>\n`;
+        message += `- Log channel: <#${logChannel.discordId}>\n`;
       }
 
       const gameGuilds = await databaseHelper.getGameGuilds(server.id);
@@ -62,14 +62,14 @@ export default class GetServerInfoCommand extends BaseChatInputCommand {
         const guilds = guildsMap.get(guild.gameId)!;
         guilds.push(guild);
       }
-      message += `Games played here:\n`
+      message += `- Games played here:\n`
       for (const gameGuild of gameGuilds) {
         const guilds = guildsMap.get(gameGuild.gameId);
         if (guilds) {
-          message += `- **${gameGuild.game.name}** (${guilds.length}) : ${guilds.map(guild => guild.name).join(', ')}\n`;
+          message += `  - **${gameGuild.game.name}** (${guilds.length}) : ${guilds.map(guild => guild.name).join(', ')}\n`;
         }
         else {
-          message += `- **${gameGuild.game.name}** (0)\n`;
+          message += `  - **${gameGuild.game.name}** (0)\n`;
         }
       }
 
